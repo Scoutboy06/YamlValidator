@@ -7,6 +7,7 @@ int main() {
 		{ "body", String }
 	});
 
+	/*
 	Schema anotherBlogSchema({
 		{ "title", String },
 		{ "author", String },
@@ -20,5 +21,5 @@ int main() {
 			{ "votes", Number },
 			{ "favs", Number },
 		})}
-	});
+	});*/
 }

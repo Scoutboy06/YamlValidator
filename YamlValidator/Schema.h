@@ -30,17 +30,13 @@ class Object {
 	Object(std::initializer_list<kvPair> input) {}
 };
 
+// Ok and Error defined in YamlParser.h
+// TODO: move Ok and Error to global space?
+using ValidationResult = std::variant<Ok, Error>;
+
 class Schema {
 private:
 public:
-	struct Ok;
-	struct Error {
-		std::string message;
-		Error(std::string message) : message(message) {}
-	};
-
-	using ValidationResult = std::variant<Ok, Error>;
-
 	// static void FromFile(std::string filePath); // Om vi har tid?
 
 	Schema(std::vector<kvPair> input) {}
