@@ -10,6 +10,8 @@ class String {
 	const std::string& value;
 	String(const std::string& value) : value(value) {}
 	String(const char value[]) : value(value) {}
+
+	bool operator<(const String& other) const { return value < other.value; };
 };
 
 class Number {
@@ -36,7 +38,7 @@ private:
 
 public:
 	Object() {}
-	
+
 	void Set(const std::string& key, const YamlValue& value) {
 		map.insert_or_assign(key, value);
 	}
