@@ -1,0 +1,13 @@
+# This is a comment
+title: My new blog!
+author: Elias Wennerlund
+body: Lorem ipsum dolor sit amet
+comments:
+  - body: This is a comment... # And this too!
+    date: 2024-04-09
+  - body: Is this another comment?
+    date: 1939-09-01
+hidden: false
+meta:
+  votes: 204
+  favs: 39

@@ -136,6 +136,9 @@
     <ClInclude Include="Schema.h" />
     <ClInclude Include="YamlParser.h" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="blog.yaml" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
