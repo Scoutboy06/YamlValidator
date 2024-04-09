@@ -35,6 +35,7 @@ class _Array;
 using YamlValue = std::variant<_String, _Number, _Boolean, _Null, _Object, _Array>;
 using Yaml = std::variant<_Object, _Array>;
 
+
 class _Object {
 public:
 	const std::map<_String, YamlValue>& values;
@@ -89,10 +90,6 @@ public:
 	ParserResult Parse();
 };
 
-ParserResult ParseYaml(std::string& filePath) {
-	std::ifstream stream(filePath);
-	YamlParser parser(stream);
-	return parser.Parse();
-}
+ParserResult ParseYaml(std::string& filePath);
 
 

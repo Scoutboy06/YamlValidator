@@ -1,11 +1,11 @@
 #include "Schema.h"
 
 int main() {
-	Schema blogSchema({
-		{ "title", String },
-		{ "author", String },
-		{ "body", String }
-	});
+	//Schema blogSchema({
+	//	{ "title", String },
+	//	{ "author", String },
+	//	{ "body", String }
+	//});
 
 	/*
 	Schema anotherBlogSchema({

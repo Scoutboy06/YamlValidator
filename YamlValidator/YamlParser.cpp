@@ -31,7 +31,7 @@ _Object YamlParser::ParseYamlObject() {
 
 _Object YamlParser::ParseJsonObject() {
 	std::map<_String, YamlValue> obj;
-	obj.insert(std::pair("key", _String("value")));
+	//obj.insert(std::pair("key", _String("value")));
 	return _Object(obj);
 }
 
@@ -49,4 +49,11 @@ _Array YamlParser::ParseJsonArray() {
 
 ParserResult YamlParser::Parse() {
 	return ParserResult(Ok());
+}
+
+ParserResult ParseYaml(std::string& filePath)
+{
+	std::ifstream stream(filePath);
+	YamlParser parser(stream);
+	return parser.Parse();
 }
