@@ -38,7 +38,7 @@ private:
 
 public:
 	Object() {}
-
+	
 	void Set(const std::string& key, const YamlValue& value) {
 		map.insert_or_assign(key, value);
 	}
