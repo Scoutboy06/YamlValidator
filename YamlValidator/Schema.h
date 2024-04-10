@@ -5,30 +5,10 @@
 #include <vector>
 #include <variant>
 
+#include "Types.h"
 #include "YamlParser.h"
 
-// The type values for defining a Schema
-enum YamlType {
-	String,
-	Number,
-	Boolean,
-	Null,
-};
-
-class Object;
-class Array;
-
-using kvPair = std::pair<std::string, std::variant<YamlType, Array, Object>>;
-
-class Array {
-	Array(YamlType input) {}
-	Array(std::initializer_list<kvPair> input) {}
-};
-
-class Object {
-	Object(kvPair input[]) {}
-	Object(std::initializer_list<kvPair> input) {}
-};
+using kvPair = std::pair<std::string, YamlValue>;
 
 // Ok and Error defined in YamlParser.h
 // TODO: move Ok and Error to global space?
