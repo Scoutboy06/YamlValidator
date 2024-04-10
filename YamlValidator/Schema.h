@@ -1,5 +1,5 @@
 #pragma once
-
+/*
 #include <string>
 #include <map>
 #include <vector>
@@ -44,4 +44,4 @@ public:
 	ValidationResult Validate(std::string input);
 	ValidationResult ValidateFromFile(std::string fileName);
 };
-
+*/

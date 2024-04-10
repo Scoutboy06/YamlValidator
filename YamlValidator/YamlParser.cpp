@@ -1,5 +1,6 @@
 #include "YamlParser.h"
 
+/*
 void YamlParser::Advance() {}
 
 void YamlParser::SkipWhitespace() {}
@@ -57,3 +58,5 @@ ParserResult ParseYaml(std::string& filePath)
 	YamlParser parser(stream);
 	return parser.Parse();
 }
+
+*/
