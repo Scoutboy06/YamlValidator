@@ -5,50 +5,48 @@
 #include <unordered_map>
 #include <vector>
 #include <optional>
+#include <memory>
 
-class String {
-	const std::string& value;
+struct String {
+	std::string value;
 	String(const std::string& value) : value(value) {}
 	String(const char value[]) : value(value) {}
 
 	bool operator<(const String& other) const { return value < other.value; };
 };
 
-class Number {
-	const std::string& value;
+struct Number {
+	std::string value;
 	Number(const std::string& value) : value(value) {}
 	Number(const char value[]) : value(value) {}
 };
 
-class Boolean {
+struct Boolean {
 	bool value;
 	Boolean(const bool value) : value(value) {}
 };
 
-class Null {};
+struct Null {};
 
 class Object;
 class Array;
 
-using YamlValue = std::variant<String, Number, Boolean, Null, Object, Array>;
+using YamlValue = std::variant<String, Number, Boolean, Null, std::shared_ptr<Object>, std::shared_ptr<Array>>;
+using Yaml = std::variant<std::shared_ptr<Object>, std::shared_ptr<Array>>;
 
 class Object {
 private:
-	std::unordered_map<String, YamlValue> map;
+	std::unordered_map<std::string, YamlValue> map;
 
 public:
 	Object() {}
 	
-	void Set(const std::string& key, const YamlValue& value) {
-		map.insert_or_assign(key, value);
+	void Set(const std::string& key, YamlValue& value) {
+		map.emplace(key, std::move(value));
 	}
 
-	void Set(const std::pair<String, YamlValue> kv) {
-		map.insert_or_assign(kv.first, kv.second);
-	}
-
-	void Set(const std::pair<std::string, YamlValue> kv) {
-		map.insert_or_assign(String(kv.first), kv.second);
+	void Set(std::pair<std::string, YamlValue> kv) {
+		map.emplace(kv.first, std::move(kv.second));
 	}
 
 	std::optional<YamlValue> Get(const std::string& key) const {
@@ -86,6 +84,8 @@ private:
 	std::vector<YamlValue> values;
 
 public:
+	Array() {}
+
 	void PushBack(const YamlValue& value) {
 		values.push_back(value);
 	}
@@ -96,9 +96,13 @@ public:
 
 	std::optional<YamlValue> Get(const size_t index) const {
 		if (index < values.size()) {
-			return values[index];
+			return std::optional<YamlValue>(values[index]);
 		}
 		return std::nullopt;
+	}
+
+	YamlValue operator[](const size_t index) const {
+		return values[index];
 	}
 
 	size_t Size() const {
@@ -112,4 +116,4 @@ public:
 	void Clear() {
 		values.clear();
 	}
-}
+};
