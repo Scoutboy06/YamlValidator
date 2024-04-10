@@ -7,6 +7,7 @@ int main() {
 		{ "body", String }
 	});*/
 
+
 	/*
 	Schema anotherBlogSchema({
 		{ "title", String },

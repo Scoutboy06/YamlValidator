@@ -51,3 +51,10 @@ Array YamlParser::ParseJsonArray() {
 ParserResult YamlParser::Parse() {
 	return ParserResult(Ok());
 }
+
+ParserResult ParseYaml(std::string& filePath)
+{
+	std::ifstream stream(filePath);
+	YamlParser parser(stream);
+	return parser.Parse();
+}
