@@ -4,13 +4,12 @@ void Schema::FromFile(std::string fileName)
 {
 }
 
-ValidationResult Schema::Validate(std::string input)
+Schema::ValidationResult Schema::Validate(std::string input)
 {
-	return ValidationResult(Ok());
+	return ValidationResult();
 }
 
-ValidationResult Schema::ValidateFromFile(std::string fileName)
+Schema::ValidationResult Schema::ValidateFromFile(std::string fileName)
 {
-	return ValidationResult(Ok());
+	return ValidationResult();
 }
-*/
