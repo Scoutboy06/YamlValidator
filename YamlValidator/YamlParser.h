@@ -18,7 +18,7 @@ private:
 	std::variant<Yaml, ParserError> result;
 
 public:
-	ParserResult(Yaml& ok) : result(ok) {}
+	ParserResult(Yaml ok) : result(ok) {}
 	ParserResult(ParserError error) : result(error) {}
 
 	bool IsOk() const { return std::holds_alternative<Yaml>(result); }
@@ -74,9 +74,5 @@ public:
 	ParserResult Parse();
 };
 
-ParserResult ParseYaml(std::string& filePath) {
-	std::ifstream stream(filePath);
-	YamlParser parser(stream);
-	return parser.Parse();
-}
+ParserResult ParseYaml(std::string& filePath);
 

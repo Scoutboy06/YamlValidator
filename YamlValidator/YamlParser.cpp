@@ -50,5 +50,12 @@ Array YamlParser::ParseJsonArray() {
 }
 
 ParserResult YamlParser::Parse() {
-	return ParserResult(Ok(ParseYamlArray()));
+	std::shared_ptr<Array> yaml = std::make_shared<Array>(ParseYamlArray());
+	return ParserResult(yaml);
+}
+
+ParserResult ParseYaml(std::string& filePath) {
+	std::ifstream stream(filePath);
+	YamlParser parser(stream);
+	return parser.Parse();
 }
