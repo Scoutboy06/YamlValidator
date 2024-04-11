@@ -10,10 +10,6 @@
 
 using kvPair = std::pair<std::string, YamlValue>;
 
-// Ok and Error defined in YamlParser.h
-// TODO: move Ok and Error to global space?
-using ValidationResult = std::variant<Ok, Error>;
-
 class Schema {
 private:
 public:
@@ -21,7 +17,7 @@ public:
 
 	Schema(std::vector<kvPair> input) {}
 
-	ValidationResult Validate(std::string input);
-	ValidationResult ValidateFromFile(std::string fileName);
+	//ValidationResult Validate(std::string input);
+	//ValidationResult ValidateFromFile(std::string fileName);
 };
 

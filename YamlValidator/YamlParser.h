@@ -7,13 +7,38 @@
 
 #include "Types.h"
 
-struct Ok {};
-
-struct Error {
-	std::string& message;
+enum ParserError {
+	InvalidIndentation,
+	ItemWithoutData,
+	UnexpectedEndOfFile,
 };
 
-using ParserResult = std::variant<Ok, Error>;
+class ParserResult {
+private:
+	std::variant<Yaml, ParserError> result;
+
+public:
+	ParserResult(Yaml ok) : result(ok) {}
+	ParserResult(ParserError error) : result(error) {}
+
+	bool IsOk() const { return std::holds_alternative<Yaml>(result); }
+
+	bool IsError() const { return std::holds_alternative<ParserError>(result); }
+
+	Yaml GetResult() const { return std::get<Yaml>(result); }
+
+	ParserError GetError() const { return std::get<ParserError>(result); }
+
+	std::optional<Yaml> GetIfOk() const {
+		if (std::holds_alternative<Yaml>(result)) return std::get<Yaml>(result);
+		return std::nullopt;
+	}
+
+	std::optional<ParserError> GetIfError() const {
+		if (std::holds_alternative<ParserError>(result)) return std::get<ParserError>(result);
+		return std::nullopt;
+	}
+};
 
 
 class YamlParser {
@@ -51,5 +76,3 @@ public:
 };
 
 ParserResult ParseYaml(std::string& filePath);
-
-

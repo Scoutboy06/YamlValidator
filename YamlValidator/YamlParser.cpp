@@ -25,35 +25,29 @@ Null YamlParser::ParseNull() {
 }
 
 Object YamlParser::ParseYamlObject() {
-	Object obj;
-	obj.Set({ "key", String("value") });
-	return obj;
+	return Object();
 }
 
 Object YamlParser::ParseJsonObject() {
-	Object obj;
-	obj.Set({ "key", String("value") });
-	return obj;
+	return Object();
 }
 
 Array YamlParser::ParseYamlArray() {
 	Array arr;
-	arr.PushBack(String("Array value"));
 	return arr;
 }
 
 Array YamlParser::ParseJsonArray() {
 	Array arr;
-	arr.PushBack(String("Array value"));
 	return arr;
 }
 
 ParserResult YamlParser::Parse() {
-	return ParserResult(Ok());
+	std::shared_ptr<Array> yaml = std::make_shared<Array>(ParseYamlArray());
+	return ParserResult(yaml);
 }
 
-ParserResult ParseYaml(std::string& filePath)
-{
+ParserResult ParseYaml(std::string& filePath) {
 	std::ifstream stream(filePath);
 	YamlParser parser(stream);
 	return parser.Parse();
