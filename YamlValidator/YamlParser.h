@@ -5,55 +5,40 @@
 #include <fstream>
 #include <map>
 
-// Data types for internal use
+#include "Types.h"
 
-struct _String {
+enum ParserError {
+	InvalidIndentation,
+	ItemWithoutData,
+	UnexpectedEndOfFile,
+};
+
+class ParserResult {
+private:
+	std::variant<Yaml, ParserError> result;
+
 public:
-	const std::string& value;
-	_String(const std::string& value) : value(value) {}
-	_String(const char value[]) : value(value) {}
+	ParserResult(Yaml& ok) : result(ok) {}
+	ParserResult(ParserError error) : result(error) {}
+
+	bool IsOk() const { return std::holds_alternative<Yaml>(result); }
+
+	bool IsError() const { return std::holds_alternative<ParserError>(result); }
+
+	Yaml GetResult() const { return std::get<Yaml>(result); }
+
+	ParserError GetError() const { return std::get<ParserError>(result); }
+
+	std::optional<Yaml> GetIfOk() const {
+		if (std::holds_alternative<Yaml>(result)) return std::get<Yaml>(result);
+		return std::nullopt;
+	}
+
+	std::optional<ParserError> GetIfError() const {
+		if (std::holds_alternative<ParserError>(result)) return std::get<ParserError>(result);
+		return std::nullopt;
+	}
 };
-
-struct _Number {
-public:
-	std::string value;
-	_Number(std::string& value) : value(value) {}
-	_Number(const char value[]) : value(value) {}
-};
-
-struct _Boolean {
-public:
-	bool value;
-	_Boolean(bool value) : value(value) {}
-};
-
-struct _Null {};
-
-class _Object;
-class _Array;
-
-using YamlValue = std::variant<_String, _Number, _Boolean, _Null, _Object, _Array>;
-using Yaml = std::variant<_Object, _Array>;
-
-class _Object {
-public:
-	const std::map<_String, YamlValue>& values;
-	_Object(const std::map<_String, YamlValue>& values) : values(values) {}
-};
-
-class _Array {
-public:
-	const std::vector<YamlValue>& values;
-	_Array(const std::vector<YamlValue>& values) : values(values) {}
-};
-
-// Parser result
-
-struct Ok {};
-struct Error {
-	std::string& message;
-};
-using ParserResult = std::variant<Ok, Error>;
 
 class YamlParser {
 private:
@@ -70,15 +55,15 @@ private:
 	void Expect(char c);
 	void ExpectEither(std::initializer_list<char> list);
 
-	_String ParseString();
-	_Number ParseNumber();
-	_Boolean ParseBoolean();
-	_Null ParseNull();
+	String ParseString();
+	Number ParseNumber();
+	Boolean ParseBoolean();
+	Null ParseNull();
 
-	_Object ParseYamlObject();
-	_Object ParseJsonObject();
-	_Array ParseYamlArray();
-	_Array ParseJsonArray();
+	Object ParseYamlObject();
+	Object ParseJsonObject();
+	Array ParseYamlArray();
+	Array ParseJsonArray();
 	
 public:
 	YamlParser(std::ifstream& stream) : stream(stream) {
@@ -94,5 +79,4 @@ ParserResult ParseYaml(std::string& filePath) {
 	YamlParser parser(stream);
 	return parser.Parse();
 }
-
 
