@@ -40,6 +40,7 @@ public:
 	}
 };
 
+
 class YamlParser {
 private:
 	std::ifstream& stream;
@@ -75,4 +76,3 @@ public:
 };
 
 ParserResult ParseYaml(std::string& filePath);
-

@@ -34,18 +34,11 @@ Object YamlParser::ParseJsonObject() {
 
 Array YamlParser::ParseYamlArray() {
 	Array arr;
-	Number n("1");
-	arr.PushBack(Number("1"));
-	arr.PushBack(Number("2"));
-	arr.PushBack(Number("3"));
 	return arr;
 }
 
 Array YamlParser::ParseJsonArray() {
 	Array arr;
-	arr.PushBack(1);
-	arr.PushBack(2);
-	arr.PushBack(3);
 	return arr;
 }
 
