@@ -1,18 +1,19 @@
 #include "Schema.h"
 
-using SchemaTypes = Schema::Types;
-
 int main() {
 	Schema blogSchema({
-		{ "title", SchemaTypes::String },
-		{ "author", SchemaTypes::String },
-		{ "body", SchemaTypes::String },
-		{ "body", SchemaTypes::Boolean },
-		{ "comments", std::make_shared<Schema::Array>(SchemaTypes::String) },
-		{ "meta", std::make_shared<Schema::Object>(std::map<std::string, Schema::SchemaValue>{
-			{ "met", SchemaTypes::String }
+		{ "title", Schema::Either(Schema::String)},
+		{ "author", Schema::String },
+		{ "body", Schema::String },
+		{ "body", Schema::Boolean },
+		{ "comments", Schema::Array(Schema::String) },
+		{ "meta", Schema::Object({
+			{ "met", Schema::String },
+			{"abc", Schema::Object({
+				{"lads", Schema::Null}
+			})}
 		})},
-	});
+		});
 
 	/*
 	Schema anotherBlogSchema({

@@ -18,32 +18,49 @@ public:
 
 	};
 
-	enum class Types {
+
+
+	enum Types {
 		String,
-		Integer,
-		Float,
+		Number,
 		Boolean,
 		Null
 	};
 
-	struct Array;
-	struct Object;
+	struct ObjectImplementation;
 
-	using SchemaValue = std::variant<Types, std::shared_ptr<Array>, std::shared_ptr<Object>>;
-
+	//struct Either;
 
 	struct Array {
 	private:
-		SchemaValue type;
+		Types type;
 	public:
-		Array(SchemaValue type) : type(type) {};
+		Array(Types type) : type(type) {};
 	};
 
-	struct Object {
+	struct Either {
+		std::vector<Types> values;
+
+		template<typename... Args>
+		Either(Args... args) : values({args...}) {
+			
+		};
+	};
+
+	using SchemaValue = std::variant<Types, Either, Array, std::shared_ptr<ObjectImplementation>>;
+	// SchemaValue needs a shared pointer for Object because it is forward declared
+	// and std::variant typically needs to know the objects size.
+
+
+	struct ObjectImplementation {
 	private:
-		std::map<std::string, SchemaValue> values;
+		std::map<std::string,SchemaValue> values;
 	public:
-		Object(std::map<std::string, SchemaValue> values) : values(values) {};
+		ObjectImplementation(std::map<std::string, SchemaValue> values) : values(values) {};
+	};
+
+	static std::shared_ptr<ObjectImplementation> Object(std::map<std::string, SchemaValue> values) {
+		return std::make_shared<ObjectImplementation>(ObjectImplementation(values));
 	};
 
 
@@ -52,7 +69,9 @@ public:
 
 	// static void FromFile(std::string filePath); // Om vi har tid?
 
-	Schema(std::vector<SchemaPair> input) {}
+	Schema(std::vector<SchemaPair> input) {
+		
+	}
 
 	static void FromFile(std::string fileName); //loads schema from file
 	/* YAML-file example
