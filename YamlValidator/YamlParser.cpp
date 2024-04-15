@@ -39,6 +39,20 @@ Array YamlParser::ParseYamlArray() {
 
 Array YamlParser::ParseJsonArray() {
 	Array arr;
+
+	Expect('[', ParserError::ParserInternalError);
+	SkipWhitespace();
+
+	while (currChar != ']') {
+		arr.PushBack(ParseValue());
+
+		if (currChar == ',') Advance();
+		
+		SkipWhitespace();
+	}
+
+	Advance(); // Skip '}'
+
 	return arr;
 }
 
