@@ -15,22 +15,22 @@ enum ParserError {
 
 class ParserResult {
 private:
-	std::variant<Yaml, ParserError> result;
+	std::variant<ParserTypes::Yaml, ParserError> result;
 
 public:
-	ParserResult(Yaml ok) : result(ok) {}
+	ParserResult(ParserTypes::Yaml ok) : result(ok) {}
 	ParserResult(ParserError error) : result(error) {}
 
-	bool IsOk() const { return std::holds_alternative<Yaml>(result); }
+	bool IsOk() const { return std::holds_alternative<ParserTypes::Yaml>(result); }
 
 	bool IsError() const { return std::holds_alternative<ParserError>(result); }
 
-	Yaml GetResult() const { return std::get<Yaml>(result); }
+	ParserTypes::Yaml GetResult() const { return std::get<ParserTypes::Yaml>(result); }
 
 	ParserError GetError() const { return std::get<ParserError>(result); }
 
-	std::optional<Yaml> GetIfOk() const {
-		if (std::holds_alternative<Yaml>(result)) return std::get<Yaml>(result);
+	std::optional<ParserTypes::Yaml> GetIfOk() const {
+		if (std::holds_alternative<ParserTypes::Yaml>(result)) return std::get<ParserTypes::Yaml>(result);
 		return std::nullopt;
 	}
 
@@ -56,15 +56,15 @@ private:
 	void Expect(char c);
 	void ExpectEither(std::initializer_list<char> list);
 
-	String ParseString();
-	Number ParseNumber();
-	Boolean ParseBoolean();
-	Null ParseNull();
+	ParserTypes::String ParseString();
+	ParserTypes::Number ParseNumber();
+	ParserTypes::Boolean ParseBoolean();
+	ParserTypes::Null ParseNull();
 
-	Object ParseYamlObject();
-	Object ParseJsonObject();
-	Array ParseYamlArray();
-	Array ParseJsonArray();
+	ParserTypes::Object ParseYamlObject();
+	ParserTypes::Object ParseJsonObject();
+	ParserTypes::Array ParseYamlArray();
+	ParserTypes::Array ParseJsonArray();
 	
 public:
 	YamlParser(std::ifstream& stream) : stream(stream) {

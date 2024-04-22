@@ -8,7 +8,7 @@
 #include "Types.h"
 #include "YamlParser.h"
 
-using kvPair = std::pair<std::string, YamlValue>;
+using kvPair = std::pair<std::string, ParserTypes::YamlValue>;
 
 class Schema {
 private:

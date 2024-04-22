@@ -8,42 +8,42 @@ void YamlParser::Expect(char c) {}
 
 void YamlParser::ExpectEither(std::initializer_list<char> list) {}
 
-String YamlParser::ParseString() {
-	return String("test");
+ParserTypes::String YamlParser::ParseString() {
+	return ParserTypes::String("test");
 }
 
-Number YamlParser::ParseNumber() {
-	return Number("123");
+ParserTypes::Number YamlParser::ParseNumber() {
+	return ParserTypes::Number("123");
 }
 
-Boolean YamlParser::ParseBoolean() {
-	return Boolean(true);
+ParserTypes::Boolean YamlParser::ParseBoolean() {
+	return ParserTypes::Boolean(true);
 }
 
-Null YamlParser::ParseNull() {
-	return Null();
+ParserTypes::Null YamlParser::ParseNull() {
+	return ParserTypes::Null();
 }
 
-Object YamlParser::ParseYamlObject() {
-	return Object();
+ParserTypes::Object YamlParser::ParseYamlObject() {
+	return ParserTypes::Object();
 }
 
-Object YamlParser::ParseJsonObject() {
-	return Object();
+ParserTypes::Object YamlParser::ParseJsonObject() {
+	return ParserTypes::Object();
 }
 
-Array YamlParser::ParseYamlArray() {
-	Array arr;
+ParserTypes::Array YamlParser::ParseYamlArray() {
+	ParserTypes::Array arr;
 	return arr;
 }
 
-Array YamlParser::ParseJsonArray() {
-	Array arr;
+ParserTypes::Array YamlParser::ParseJsonArray() {
+	ParserTypes::Array arr;
 	return arr;
 }
 
 ParserResult YamlParser::Parse() {
-	std::shared_ptr<Array> yaml = std::make_shared<Array>(ParseYamlArray());
+	std::shared_ptr<ParserTypes::Array> yaml = std::make_shared<ParserTypes::Array>(ParseYamlArray());
 	return ParserResult(yaml);
 }
 
