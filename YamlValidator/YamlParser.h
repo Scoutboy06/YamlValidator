@@ -7,6 +7,8 @@
 
 #include "Types.h"
 
+using namespace ParserTypes;
+
 enum ParserError {
 	InvalidIndentation,
 	ItemWithoutData,
@@ -25,7 +27,7 @@ public:
 
 	bool IsError() const { return std::holds_alternative<ParserError>(result); }
 
-	Yaml GetResult() const { return std::get<Yaml>(result); }
+	Yaml GetResult() const { return std::get<::Yaml>(result); }
 
 	ParserError GetError() const { return std::get<ParserError>(result); }
 
