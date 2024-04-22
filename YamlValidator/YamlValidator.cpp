@@ -1,15 +1,15 @@
 #include "Schema.h"
 
 int main() {
-	Schema blogSchema({
+	Schema blogSchema(std::unordered_map<std::string, Schema::SchemaValue>{
 		{ "title", Schema::Either(Schema::String)},
 		{ "author", Schema::String },
 		{ "body", Schema::String },
 		{ "body", Schema::Boolean },
-		{ "comments", Schema::Array(Schema::String) },
-		{ "meta", Schema::Object({
+		{ "comments", Schema::CreateArray(Schema::String) },
+		{ "meta", Schema::CreateObject({
 			{ "met", Schema::String },
-			{"abc", Schema::Object({
+			{"abc", Schema::CreateObject({
 				{"lads", Schema::Null}
 			})}
 		})},
