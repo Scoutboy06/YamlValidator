@@ -4,8 +4,11 @@
 #include <vector>
 #include <fstream>
 #include <map>
+#include <regex>
 
 #include "Types.h"
+
+const std::string specialChars("{}[],&*#?|-<>=!%@\\:");
 
 enum ParserError {
     FileOpenError,
@@ -85,24 +88,43 @@ private:
 	std::ifstream& stream;
 	char currChar;
 	char peekChar;
-	long rowNumber = 0;
-	long colNumber = 0;
+    long lineIndex = 0;
+    long colIndex = 0;
 	bool isEOF = false;
 	bool isPeekEOF = false;
 
 	void Advance();
+    void SkipSpaces();
 	void SkipWhitespace();
-	void Expect(char c);
-	void ExpectEither(std::initializer_list<char> list);
+    void Expect(char c, ParserError error);
+    void ExpectEither(const std::string& chars, ParserError error);
 
-	String ParseString();
-	Number ParseNumber();
-	Boolean ParseBoolean();
-	Null ParseNull();
+    YamlValue ParseValue();
+    std::string ParseObjectKey();
+    static std::optional<bool> IsBoolean(std::string& value);
+    static bool IsNumber(std::string& value);
+    static bool IsNull(std::string& value);
+    bool IsTimestamp(std::string& value);
 
 	Object ParseYamlObject();
+    Array ParseYamlArray();
+
+    /*
+     * Reads the input stream and parses the contents
+     * as a JSON-like object.
+     * 
+     * @note `currChar` MUST be `{` when calling this method.
+     * Otherwise, an error will be thrown.
+     */
 	Object ParseJsonObject();
-	Array ParseYamlArray();
+
+    /*
+     * Reads the input stream and parses the contents
+     * as a JSON array.
+     * 
+     * @note `currChar` MUST be `[` when calling this method.
+     * Otherwise, an error will be thrown.
+     */
 	Array ParseJsonArray();
 	
 public:
@@ -114,4 +136,4 @@ public:
 	ParserResult Parse();
 };
 
-ParserResult ParseYaml(std::string& filePath);
+ParserResult ParseYaml(const std::string& filePath);
