@@ -42,7 +42,138 @@ void YamlParser::ExpectEither(const std::string& chars, ParserError error) {
     throw error;
 }
 
-void YamlParser::SkipWhitespace() {}
+YamlValue YamlParser::ParseValue() {
+    SkipWhitespace();
+
+    // JSON Array or Object
+    if (currChar == '[') return std::make_shared<Array>(ParseJsonArray());
+    if (currChar == '{') return std::make_shared<Object>(ParseJsonObject());
+    // TODO: handle YAML array and object
+
+    // Must be a Scalar
+    // https://symfony.com/doc/current/reference/formats/yaml.html#scalars
+
+    std::string value;
+    bool isSingleQuoted = currChar == '\'';
+    bool isDoubleQuoted = currChar == '"';
+
+    if (isSingleQuoted || isDoubleQuoted) Advance();
+
+    // TODO: Handle multi-line strings
+    //bool isMultiLine = currChar == '>' || currChar == '|';
+
+    // Extract the value
+    while (!(currChar == ',' && !isSingleQuoted && !isDoubleQuoted)) {
+        // Handle " character
+        // " characters don't need to be escaped in a single-quote string
+        if (currChar == '"' && !isSingleQuoted) {
+            
+            // " characters are not valid inside an un-quoted string
+            if (!isDoubleQuoted) {
+                throw ParserError::InvalidScalarError;
+            }
+
+            // End of quotation
+            return String(value); // Quotations always return strings
+        }
+
+        // Handle ' character
+        // ' characters don't need to be escaped in a double-quote string
+        else if (currChar == '\'' && !isDoubleQuoted) {
+            
+            // ' characters are not valid inside an un-quoted string
+            if(!isSingleQuoted) {
+                throw ParserError::InvalidScalarError;
+            }
+
+            // ' characters are escaped by ' characters in a single-quote string
+            // eg. 'this ''string'' has '' characters inside,
+            // Which gives out "this 'string' has ' characters inside"
+            if(peekChar == '\'') {
+                value.push_back('\'');
+                Advance();
+                Advance();
+                continue;
+            }
+
+            // End of quotation
+            return String(value); // Quotations always return strings
+        }
+
+        // Handle invalid characters
+        else if (!isSingleQuoted && !isDoubleQuoted && specialChars.find(currChar) != std::string::npos) {
+            throw ParserError::UnexpectedCharacterError;
+        }
+
+        value.push_back(currChar);
+        Advance();
+    }
+
+    // End of un-quoted value
+    if (auto opt = IsBoolean(value); opt.has_value()) return Boolean(opt.value());
+    else if (IsNumber(value)) return Number(value);
+    else if (IsNull(value)) return Null();
+    //else if(auto opt = IsTimestamp(value); opt.has_value()) return Timestamp(opt.value());
+    return String(value);
+}
+
+std::string YamlParser::ParseObjectKey() {
+    std::string key;
+
+    bool isSingleQuoted = currChar == '\'';
+    bool isDoubleQuoted = currChar == '"';
+
+    while (!(currChar != ':' && !isSingleQuoted && !isDoubleQuoted)) {
+
+        // Check for invalid quotation marks
+        if ((currChar == '\'' || currChar == '"') && !isDoubleQuoted && !isSingleQuoted) {
+            throw ParserError::UnexpectedCharacterError;
+        }
+
+        // Handle single-quotes
+        else if (currChar == '\'' && isSingleQuoted) {
+            // Single quotation marks are escaped by single
+            // quotation marks in a YAML string
+            if (peekChar == '\'') {
+                key.push_back('\'');
+                Advance();
+                Advance();
+                continue;
+            }
+
+            // End of key
+            else {
+                break;
+            }
+        }
+
+        // Backslash-escaped characters not handled by std::ifstream
+        else if (currChar == '\\' && isDoubleQuoted) {
+            // Escaped " character in double quoted string
+            if (peekChar == '"' && isDoubleQuoted) {
+                key.push_back('"');
+                Advance();
+                Advance();
+                continue;
+            }
+
+            // End of key
+            else {
+                break;
+            }
+        }
+
+        // Search for un-quoted special characters
+        else if (!isSingleQuoted && !isDoubleQuoted && specialChars.find(currChar) != std::string::npos) {
+            throw ParserError::UnexpectedCharacterError;
+        }
+
+        key.push_back(currChar);
+        Advance();
+    }
+
+    return key;
+}
 
 std::optional<bool> YamlParser::IsBoolean(std::string& v) {
     if (v == "true" || v == "True" || v == "TRUE") return true;
@@ -91,7 +222,29 @@ Object YamlParser::ParseYamlObject() {
 }
 
 Object YamlParser::ParseJsonObject() {
-	return Object();
+    Object obj;
+
+    Expect('{', ParserError::ParserInternalError);
+    SkipWhitespace();
+
+    while (currChar != '}') {
+        std::string key = ParseObjectKey();
+
+        SkipWhitespace();
+        Expect(':', ParserError::ParserInternalError);
+
+        YamlValue value = ParseValue();
+
+        obj.Set(key, value);
+
+        SkipWhitespace();
+        if (currChar == ',') {
+            Advance();
+            SkipWhitespace();
+        }
+    }
+
+    return obj;
 }
 
 Array YamlParser::ParseYamlArray() {
