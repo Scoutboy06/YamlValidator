@@ -1,12 +1,12 @@
 #include "YamlParser.h"
 
 void YamlParser::Advance() {
-    colIndex++;
+    column++;
 
     // Previous character
     if (currChar == '\n') {
-        lineIndex++;
-        colIndex = 0;
+        line++;
+        column = 1;
     }
 
     currChar = peekChar;
@@ -24,14 +24,14 @@ void YamlParser::SkipWhitespace() {
     while (isspace(currChar)) Advance();
 }
 
-void YamlParser::Expect(char c, ParserError error) {
-    if (currChar == c) {
+void YamlParser::Expect(char c, ErrorType error) {
+    if (currChar != c) {
         throw error;
     }
     Advance();
 }
 
-void YamlParser::ExpectEither(const std::string& chars, ParserError error) {
+void YamlParser::ExpectEither(const std::string& chars, ErrorType error) {
     for (char ch : chars) {
         if (ch == currChar) {
             Advance();
@@ -70,8 +70,10 @@ YamlValue YamlParser::ParseValue() {
             
             // " characters are not valid inside an un-quoted string
             if (!isDoubleQuoted) {
-                throw ParserError::InvalidScalarError;
+                throw ErrorType::InvalidScalarError;
             }
+
+            Advance(); // Skip " character
 
             // End of quotation
             return String(value); // Quotations always return strings
@@ -83,7 +85,7 @@ YamlValue YamlParser::ParseValue() {
             
             // ' characters are not valid inside an un-quoted string
             if(!isSingleQuoted) {
-                throw ParserError::InvalidScalarError;
+                throw ErrorType::InvalidScalarError;
             }
 
             // ' characters are escaped by ' characters in a single-quote string
@@ -96,13 +98,15 @@ YamlValue YamlParser::ParseValue() {
                 continue;
             }
 
+            Advance(); // Skip ' character
+
             // End of quotation
             return String(value); // Quotations always return strings
         }
 
         // Handle invalid characters
         else if (!isSingleQuoted && !isDoubleQuoted && specialChars.find(currChar) != std::string::npos) {
-            throw ParserError::UnexpectedCharacterError;
+            throw ErrorType::UnexpectedCharacterError;
         }
 
         value.push_back(currChar);
@@ -127,7 +131,7 @@ std::string YamlParser::ParseObjectKey() {
 
         // Check for invalid quotation marks
         if ((currChar == '\'' || currChar == '"') && !isDoubleQuoted && !isSingleQuoted) {
-            throw ParserError::UnexpectedCharacterError;
+            throw ErrorType::UnexpectedCharacterError;
         }
 
         // Handle single-quotes
@@ -165,7 +169,7 @@ std::string YamlParser::ParseObjectKey() {
 
         // Search for un-quoted special characters
         else if (!isSingleQuoted && !isDoubleQuoted && specialChars.find(currChar) != std::string::npos) {
-            throw ParserError::UnexpectedCharacterError;
+            throw ErrorType::UnexpectedCharacterError;
         }
 
         key.push_back(currChar);
@@ -202,10 +206,9 @@ bool YamlParser::IsNumber(std::string& v) {
             if (v[i] < '0' || v[i] > '7') return false;
         }
         return true;
-}
+    }
 
     return std::regex_match(v, std::regex(R"([-+]?(\.[0-9]+|[0-9]+(\.[0-9]*)?)([eE][-+]?[0-9]+)?)"));
-	return Number("123");
 }
 
 bool YamlParser::IsNull(std::string& v) {
@@ -218,20 +221,22 @@ bool YamlParser::IsTimestamp(std::string& v) {
 }
 
 Object YamlParser::ParseYamlObject() {
-	return Object();
+    Object obj;
+    obj.Set({ "key", String("value") });
+    return obj;
 }
 
 Object YamlParser::ParseJsonObject() {
     Object obj;
 
-    Expect('{', ParserError::ParserInternalError);
+    Expect('{', ErrorType::UnexpectedCharacterError);
     SkipWhitespace();
 
     while (currChar != '}') {
         std::string key = ParseObjectKey();
 
         SkipWhitespace();
-        Expect(':', ParserError::ParserInternalError);
+        Expect(':', ErrorType::UnexpectedCharacterError);
 
         YamlValue value = ParseValue();
 
@@ -248,47 +253,49 @@ Object YamlParser::ParseJsonObject() {
 }
 
 Array YamlParser::ParseYamlArray() {
-	Array arr;
-	return arr;
+    Array arr;
+    arr.PushBack(String("example"));
+    return arr;
 }
 
 Array YamlParser::ParseJsonArray() {
-	Array arr;
+    Array arr;
 
-	Expect('[', ParserError::ParserInternalError);
-	SkipWhitespace();
+    Expect('[', ErrorType::UnexpectedCharacterError);
+    SkipWhitespace();
 
-	while (currChar != ']') {
-		arr.PushBack(ParseValue());
+    while (currChar != ']') {
+        arr.PushBack(ParseValue());
 
-		if (currChar == ',') Advance();
-		
-		SkipWhitespace();
-	}
+        if (currChar == ',') Advance();
+        
+        SkipWhitespace();
+    }
 
-	Advance(); // Skip '}'
+    Advance(); // Skip ']'
 
-	return arr;
+    return arr;
 }
 
 ParserResult YamlParser::Parse() {
     try {
         try {
-            std::shared_ptr<Array> yaml = std::make_shared<Array>(ParseJsonArray());
-	return ParserResult(yaml);
-        } catch (ParserError error) {
-            return ParserResult(error);
+            auto result = ParseJsonArray();
+            std::shared_ptr<Array> yaml = std::make_shared<Array>(result);
+            return ParserResult(yaml);
+        } catch (ErrorType error) {
+            return ParserResult(error, line, column);
         }
     }
     
-    // Catch any errors that are not of type ParserError
+    // Catch any errors that are not of type ErrorType
     catch (...) {
-        return ParserResult(ParserError::ParserInternalError);
+        return ParserResult(ErrorType::ParserInternalError, line, column);
     }
 }
 
 ParserResult ParseYaml(const std::string& filePath) {
-	std::ifstream stream(filePath);
-	YamlParser parser(stream);
-	return parser.Parse();
+    std::ifstream stream(filePath);
+    YamlParser parser(stream);
+    return parser.Parse();
 }
