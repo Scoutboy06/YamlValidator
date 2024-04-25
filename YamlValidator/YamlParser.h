@@ -9,6 +9,8 @@
 
 #include "Types.h"
 
+using namespace parser_types;
+
 const std::string invalidKeyChars(R"({}[]&*#?|<>=!%@\)");
 const std::string invalidValueChars(R"(:{}[]&*#?|-<>=!%@\"')");
 

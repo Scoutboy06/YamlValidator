@@ -7,7 +7,7 @@
 #include <optional>
 #include <memory>
 
-namespace ParserTypes {
+namespace parser_types {
 
 	struct String {
 		std::string value;
