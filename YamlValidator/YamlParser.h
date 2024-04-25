@@ -9,7 +9,8 @@
 
 #include "Types.h"
 
-const std::string specialChars(R"({}[],&*#?|<>=!%@\:)");
+const std::string invalidKeyChars(R"({}[]&*#?|<>=!%@\)");
+const std::string invalidValueChars(R"(:{}[]&*#?|-<>=!%@\"')");
 
 enum ErrorType {
     FileOpenError,

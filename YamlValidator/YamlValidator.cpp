@@ -1,10 +1,12 @@
-
+#include "YamlParser.h"
 
 int main() {
+	auto yaml = ParseYaml("json_object.yaml");
+
 	/*Schema blogSchema({
-		{ "title", String },
-		{ "author", String },
-		{ "body", String }
+		{ "title", Schema::String() },
+		{ "author", Schema::Number() },
+		{ "body", Schema::String() }
 	});*/
 
 	/*

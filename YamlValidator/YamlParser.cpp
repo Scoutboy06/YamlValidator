@@ -43,7 +43,6 @@ void YamlParser::ExpectEither(const std::string& chars, ErrorType error) {
 }
 
 YamlValue YamlParser::ParseValue() {
-    SkipWhitespace();
 
     // JSON Array or Object
     if (currChar == '[') return std::make_shared<Array>(ParseJsonArray());
@@ -105,7 +104,7 @@ YamlValue YamlParser::ParseValue() {
         }
 
         // Handle invalid characters
-        else if (!isSingleQuoted && !isDoubleQuoted && specialChars.find(currChar) != std::string::npos) {
+        else if (!isSingleQuoted && !isDoubleQuoted && invalidValueChars.find(currChar) != std::string::npos) {
             throw ErrorType::UnexpectedCharacterError;
         }
 
@@ -127,7 +126,9 @@ std::string YamlParser::ParseObjectKey() {
     bool isSingleQuoted = currChar == '\'';
     bool isDoubleQuoted = currChar == '"';
 
-    while (!(currChar != ':' && !isSingleQuoted && !isDoubleQuoted)) {
+    if (isSingleQuoted || isDoubleQuoted) Advance();
+
+    while (!(currChar == ':' && !isSingleQuoted && !isDoubleQuoted)) {
 
         // Check for invalid quotation marks
         if ((currChar == '\'' || currChar == '"') && !isDoubleQuoted && !isSingleQuoted) {
@@ -145,10 +146,24 @@ std::string YamlParser::ParseObjectKey() {
                 continue;
             }
 
+            Advance(); // Skip ' character
+
             // End of key
-            else {
-                break;
+            return key;
+        }
+
+        // Handle " character
+        // " characters don't need to be escaped in a single-quote string
+        else if (currChar == '"' && !isSingleQuoted) {
+            // " characters are not valid inside an un-quoted string
+            if (!isDoubleQuoted) {
+                throw ErrorType::UnexpectedCharacterError;
             }
+
+            Advance(); // Skip " character
+
+            // End of quotation
+            return key; // Quotations always return strings
         }
 
         // Backslash-escaped characters not handled by std::ifstream
@@ -161,14 +176,14 @@ std::string YamlParser::ParseObjectKey() {
                 continue;
             }
 
+            Advance(); // Skip " character
+
             // End of key
-            else {
-                break;
-            }
+            return key;
         }
 
         // Search for un-quoted special characters
-        else if (!isSingleQuoted && !isDoubleQuoted && specialChars.find(currChar) != std::string::npos) {
+        else if (!isSingleQuoted && !isDoubleQuoted && invalidKeyChars.find(currChar) != std::string::npos) {
             throw ErrorType::UnexpectedCharacterError;
         }
 
@@ -237,6 +252,7 @@ Object YamlParser::ParseJsonObject() {
 
         SkipWhitespace();
         Expect(':', ErrorType::UnexpectedCharacterError);
+        SkipWhitespace();
 
         YamlValue value = ParseValue();
 
@@ -248,6 +264,8 @@ Object YamlParser::ParseJsonObject() {
             SkipWhitespace();
         }
     }
+
+    Advance(); // Skip } character
 
     return obj;
 }
@@ -280,8 +298,8 @@ Array YamlParser::ParseJsonArray() {
 ParserResult YamlParser::Parse() {
     try {
         try {
-            auto result = ParseJsonArray();
-            std::shared_ptr<Array> yaml = std::make_shared<Array>(result);
+            auto result = ParseJsonObject();
+            std::shared_ptr<Object> yaml = std::make_shared<Object>(result);
             return ParserResult(yaml);
         } catch (ErrorType error) {
             return ParserResult(error, line, column);
