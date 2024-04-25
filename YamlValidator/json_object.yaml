@@ -1,0 +1,8 @@
+{
+	"quoted ~key~": " quoted [value] ",
+	unquoted-key: unquoted value,
+	nested_object: {
+		key: ~,
+	},
+	key with spaces: true,
+}
