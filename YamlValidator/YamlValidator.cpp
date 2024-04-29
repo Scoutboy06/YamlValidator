@@ -1,19 +1,35 @@
 #include "Schema.h"
 
 int main() {
-	Schema blogSchema(std::unordered_map<std::string, Schema::SchemaValue>{
-		{ "title", Schema::Either(Schema::String)},
-		{ "author", Schema::String },
-		{ "body", Schema::String },
-		{ "body", Schema::Boolean },
-		{ "comments", Schema::CreateArray(Schema::String) },
-		{ "meta", Schema::CreateObject({
-			{ "met", Schema::String },
-			{"abc", Schema::CreateObject({
-				{"lads", Schema::Null}
-			})}
+	//Schema blogSchema(std::unordered_map<std::string, Schema::SchemaValue>{
+	//	{ "title", Schema::Either(Schema::String)},
+	//	{ "author", Schema::String },
+	//	{ "body", Schema::String },
+	//	{ "body", Schema::Boolean },
+	//	{ "comments", Schema::CreateArray(Schema::String) },
+	//	{ "meta", Schema::CreateObject({
+	//		{ "met", Schema::String },
+	//		{"abc", Schema::CreateObject({
+	//			{"lads", Schema::Null}
+	//		})}
+	//	})},
+	//	});
+
+	Schema blogSchema(
+		Schema::CreateArray(Schema::Either(Schema::String, Schema::Null))
+	);
+
+	Schema blogSchema2(Schema::CreateObject( {
+		{ "test", Schema::CreateObject({ 
+			{"test", Schema::Either(Schema::String, Schema::Boolean)},
+			{"red", Schema::Either(Schema::String, Schema::Boolean, Schema::Null)}
 		})},
-		});
+		{"test2", Schema::Either(Schema::String, Schema::Boolean)}
+	}));
+
+	//blogSchema.ValidateFromFile("abc.yaml");
+
+	blogSchema2.ValidateFromFile("abc.yaml");
 
 	/*
 	Schema anotherBlogSchema({

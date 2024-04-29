@@ -15,7 +15,28 @@
 class Schema {
 public:
 	struct ValidationResult {
+		struct ValidationError {
+			enum SchemaError {
+				TypeMismatch,
+				UnexpectedValue,
+				UnknownError
+			};
 
+			/*int column;
+			int row;*/
+
+			std::variant<ParserError, SchemaError> error;
+
+			ValidationError(std::variant<ParserError, SchemaError> error/*, int column = -1, int row = -1*/) : error(error)/*, column(column), row(row)*/ {};
+		};
+
+		struct ValidationSuccess {
+
+		};
+
+		std::variant<ValidationError, ValidationSuccess> result;
+
+		ValidationResult(std::variant<ValidationError, ValidationSuccess> result) : result(result) { }
 	};
 
 	enum Types {
@@ -26,15 +47,7 @@ public:
 	};
 
 
-	struct ObjectImplementation;
-
-	//struct Either;
-
-	struct ArrayImplementation {
-	public:
-		Types type;
-		ArrayImplementation(Types type) : type(type) {};
-	};
+	struct ObjectImplementation; //needs to be declared here so it can be forward declared later.
 
 	struct Either {
 		std::vector<Types> values;
@@ -43,7 +56,14 @@ public:
 		Either(Args... args) : values({args...}) { };
 	};
 
-	using SchemaValue = std::variant<Types, Either, ArrayImplementation, std::shared_ptr<ObjectImplementation>>;
+	struct ArrayImplementation {
+	public:
+		std::variant<Types, Either> type;
+		ArrayImplementation(std::variant<Types, Either> type) : type(type) {};
+	};
+
+
+	using SchemaValue = std::variant<Types, Either, std::shared_ptr<ArrayImplementation>, std::shared_ptr<ObjectImplementation>>;
 	// SchemaValue needs a shared pointer for Object because it is forward declared
 	// and std::variant typically needs to know the objects size at declaration.
 
@@ -52,10 +72,30 @@ public:
 	public:
 		std::unordered_map<std::string,SchemaValue> values;
 		ObjectImplementation(std::unordered_map<std::string, SchemaValue> values) : values(values) {};
+		std::optional<SchemaValue> Get(const std::string& key) const {
+			auto it = values.find(key);
+			if (it != values.end()) {
+				return it->second;
+			}
+			return std::nullopt;
+		}
+
+		bool ContainsKey(const std::string& key) const {
+			return values.find(key) != values.end();
+		}
+
+		std::vector<std::string> ExtractKeys() const {
+			std::vector<std::string> keys;
+			keys.reserve(values.size());
+			for (const auto& pair : values) {
+				keys.push_back(pair.first);
+			}
+			return keys;
+		}
 	};
 
-	static ArrayImplementation CreateArray(ArrayImplementation values) {
-		return ArrayImplementation(values);
+	static std::shared_ptr<ArrayImplementation> CreateArray(std::variant<Types, Either> values) {
+		return std::make_shared<ArrayImplementation>(ArrayImplementation(values));
 	};
 
 	static std::shared_ptr<ObjectImplementation> CreateObject(std::unordered_map<std::string, SchemaValue> values) {
@@ -66,14 +106,38 @@ public:
 	using SchemaPair = std::pair<std::string, SchemaValue>;
 
 private:
-	std::variant<std::unordered_map<std::string, SchemaValue>, ArrayImplementation> schema;
+	std::variant<std::shared_ptr<ObjectImplementation>, std::shared_ptr<ArrayImplementation>> schema;
 	Schema YamlToSchema(ParserTypes::Yaml yaml) {};
-	template <typename T>
-	bool compareTypeToParserType(Types type, T yamlInstance);
+
+	static bool compareTypeToParserType(std::variant<Types,Either> type, ParserTypes::YamlValue yamlInstance) {
+		if (std::holds_alternative<Either>(type)) {
+			Either eitherType = std::get<Either>(type);
+
+			for (const Types& typesType : eitherType.values) {
+				if (compareTypeToParserType(typesType, yamlInstance))
+					return true;
+			}
+
+			return false;
+		}
+
+		Types typesType = std::get<Types>(type);
+
+		if (typesType == Schema::String && std::holds_alternative<ParserTypes::String>(yamlInstance))
+			return true;
+		else if (typesType == Schema::Number && std::holds_alternative<ParserTypes::Number>(yamlInstance))
+			return true;
+		else if (typesType == Schema::Boolean && std::holds_alternative<ParserTypes::Boolean>(yamlInstance))
+			return true;
+		else if (typesType == Schema::Null && std::holds_alternative<ParserTypes::Null>(yamlInstance))
+			return true;
+
+		return false;
+	}
 public:
 	// static void FromFile(std::string filePath); // Om vi har tid?
 
-	Schema(std::variant<std::unordered_map<std::string, SchemaValue>, ArrayImplementation> schema) : schema(schema) {
+	Schema(std::variant<std::shared_ptr<ObjectImplementation>, std::shared_ptr<ArrayImplementation>> schema) : schema(schema) {
 		std::cout << "ab" << std::endl;
 	};
 
@@ -97,6 +161,9 @@ public:
 	*/
 
 	//ValidationResult Validate(std::string input);
+
+	static ValidationResult Validate(ParserTypes::Yaml yaml, std::variant<std::shared_ptr<ObjectImplementation>, std::shared_ptr<ArrayImplementation>> schema);
+
 	ValidationResult ValidateFromFile(std::string path);//validates a .yaml file using loaded Schema structure
 };
 
