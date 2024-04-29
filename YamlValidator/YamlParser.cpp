@@ -17,11 +17,13 @@ void YamlParser::Advance() {
 }
 
 void YamlParser::SkipSpaces() {
-    while (currChar == ' ') Advance();
+    while (currChar == ' ')
+        Advance();
 }
 
 void YamlParser::SkipWhitespace() {
-    while (isspace(currChar)) Advance();
+    while (isspace(currChar))
+        Advance();
 }
 
 void YamlParser::Expect(char c, ErrorType error) {
@@ -56,7 +58,8 @@ YamlValue YamlParser::ParseValue() {
     bool isSingleQuoted = currChar == '\'';
     bool isDoubleQuoted = currChar == '"';
 
-    if (isSingleQuoted || isDoubleQuoted) Advance();
+    if (isSingleQuoted || isDoubleQuoted)
+        Advance();
 
     // TODO: Handle multi-line strings
     //bool isMultiLine = currChar == '>' || currChar == '|';
