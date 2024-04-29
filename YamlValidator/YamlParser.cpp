@@ -298,9 +298,15 @@ Array YamlParser::ParseJsonArray() {
 ParserResult YamlParser::Parse() {
     try {
         try {
-            auto result = ParseJsonObject();
-            std::shared_ptr<Object> yaml = std::make_shared<Object>(result);
-            return ParserResult(yaml);
+            YamlValue result = ParseValue();
+
+            if (auto* obj = std::get_if<Object>(&result))
+                return ParserResult(std::make_shared<Object>(*obj));
+
+            else if (auto* arr = std::get_if<Array>(&result))
+                return ParserResult(std::make_shared<Array>(*arr));
+
+            return ParserResult(ErrorType::InvalidDocumentStartError, 1, 1);
         } catch (ErrorType error) {
             return ParserResult(error, line, column);
         }
