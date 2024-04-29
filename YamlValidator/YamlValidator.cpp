@@ -1,7 +1,7 @@
 #include "YamlParser.h"
 
 int main() {
-	auto yaml = ParseYaml("json_object.yaml");
+	auto yaml = ParseYaml("yaml_array.yaml");
 
 	/*Schema blogSchema({
 		{ "title", Schema::String() },

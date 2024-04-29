@@ -6,13 +6,16 @@
 #include <map>
 #include <regex>
 #include <iostream>
+#include <stack>
 
 #include "Types.h"
 
 using namespace parser_types;
 
+#define INDENT_SIZE 2
+
 const std::string invalidKeyChars(R"({}[]&*#?|<>=!%@\)");
-const std::string invalidValueChars(R"(:{}[]&*#?|-<>=!%@\"')");
+const std::string invalidValueChars(R"(:{}[]&*#?|<>=!%@\"')");
 
 enum ErrorType {
     FileOpenError,
@@ -99,10 +102,12 @@ private:
     std::ifstream& stream;
     char currChar;
     char peekChar;
-    long line = 1;
-    long column = 1;
+    uint32_t line = 1;
+    uint32_t column = 1;
     bool isEOF = false;
     bool isPeekEOF = false;
+
+    std::stack<uint32_t> indentStack;
 
     void Advance();
     void SkipSpaces();

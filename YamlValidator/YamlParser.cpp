@@ -47,9 +47,17 @@ void YamlParser::ExpectEither(const std::string& chars, ErrorType error) {
 YamlValue YamlParser::ParseValue() {
 
     // JSON Array or Object
-    if (currChar == '[') return std::make_shared<Array>(ParseJsonArray());
-    if (currChar == '{') return std::make_shared<Object>(ParseJsonObject());
-    // TODO: handle YAML array and object
+    if (currChar == '[')
+        return std::make_shared<Array>(ParseJsonArray());
+    if (currChar == '{')
+        return std::make_shared<Object>(ParseJsonObject());
+    
+
+    // YAML Array
+    if (currChar == '-' && peekChar == ' ')
+        return std::make_shared<Array>(ParseYamlArray());
+    
+    // TODO: handle YAML Object
 
     // Must be a Scalar
     // https://symfony.com/doc/current/reference/formats/yaml.html#scalars
@@ -65,10 +73,20 @@ YamlValue YamlParser::ParseValue() {
     //bool isMultiLine = currChar == '>' || currChar == '|';
 
     // Extract the value
-    while (!(currChar == ',' && !isSingleQuoted && !isDoubleQuoted)) {
+    while (
+        currChar != '\n' &&
+        !(currChar == ',' && !isSingleQuoted && !isDoubleQuoted)
+    ) {
+        if (isEOF) {
+            if(isSingleQuoted || isDoubleQuoted)
+                throw ErrorType::UnexpectedEndOfFileError;
+
+            break;
+        }
+
         // Handle " character
         // " characters don't need to be escaped in a single-quote string
-        if (currChar == '"' && !isSingleQuoted) {
+        else if (currChar == '"' && !isSingleQuoted) {
             
             // " characters are not valid inside an un-quoted string
             if (!isDoubleQuoted) {
@@ -275,7 +293,30 @@ Object YamlParser::ParseJsonObject() {
 
 Array YamlParser::ParseYamlArray() {
     Array arr;
-    arr.PushBack(String("example"));
+    indentStack.push(column - 1);
+
+    Expect('-', ErrorType::UnexpectedCharacterError);
+    Expect(' ', ErrorType::UnexpectedCharacterError);
+
+    while (true) {
+        arr.PushBack(ParseValue());
+
+        if (isEOF)
+            break;
+
+        SkipWhitespace();
+
+        if (column - 1 < indentStack.top()) {
+            indentStack.pop();
+            return arr;
+        }
+
+        // If we are on the same indentation level, we can expect a new list item
+        Expect('-', ErrorType::UnexpectedCharacterError);
+        Expect(' ', ErrorType::UnexpectedCharacterError);
+    }
+
+    indentStack.pop();
     return arr;
 }
 
@@ -303,11 +344,11 @@ ParserResult YamlParser::Parse() {
         try {
             YamlValue result = ParseValue();
 
-            if (auto* obj = std::get_if<Object>(&result))
-                return ParserResult(std::make_shared<Object>(*obj));
+            if (auto* obj = std::get_if<std::shared_ptr<Object>>(&result))
+                return ParserResult(*obj);
 
-            else if (auto* arr = std::get_if<Array>(&result))
-                return ParserResult(std::make_shared<Array>(*arr));
+            else if (auto* arr = std::get_if<std::shared_ptr<Array>>(&result))
+                return ParserResult(*arr);
 
             return ParserResult(ErrorType::InvalidDocumentStartError, 1, 1);
         } catch (ErrorType error) {

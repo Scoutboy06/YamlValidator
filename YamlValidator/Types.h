@@ -38,7 +38,7 @@ namespace parser_types {
 
 	class Object {
 	private:
-		std::unordered_map<std::string, YamlValue> map;
+		std::map<std::string, YamlValue> map;
 
 	public:
 		Object() {}
