@@ -141,7 +141,7 @@ public:
 		std::cout << "ab" << std::endl;
 	};
 
-	static Schema FromFile(std::string path);
+	static Schema FromFile(std::string& path);
 	//loads schema from file
 	/* YAML-file example
 	media: { type: string, required: true }
@@ -164,6 +164,6 @@ public:
 
 	static ValidationResult Validate(parser_types::Yaml yaml, std::variant<std::shared_ptr<ObjectImplementation>, std::shared_ptr<ArrayImplementation>> schema);
 
-	ValidationResult ValidateFromFile(std::string path);//validates a .yaml file using loaded Schema structure
+	ValidationResult ValidateFromFile(std::string& path);//validates a .yaml file using loaded Schema structure
 };
 
