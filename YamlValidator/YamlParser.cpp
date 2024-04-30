@@ -368,6 +368,10 @@ ParserResult YamlParser::Parse() {
 
 ParserResult ParseYaml(const std::string& filePath) {
     std::ifstream stream(filePath);
+
+    if (!stream.is_open())
+        return ParserResult(ErrorType::FileOpenError, 0, 0);
+
     YamlParser parser(stream);
     return parser.Parse();
 }
