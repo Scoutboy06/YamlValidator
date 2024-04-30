@@ -138,6 +138,11 @@
     <ClInclude Include="Types.h" />
     <ClInclude Include="YamlParser.h" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="json_array.yaml" />
+    <None Include="json_object.yaml" />
+    <None Include="yaml_array.yaml" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

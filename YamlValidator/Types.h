@@ -7,7 +7,7 @@
 #include <optional>
 #include <memory>
 
-namespace ParserTypes {
+namespace parser_types {
 
 	struct String {
 		std::string value;
@@ -38,7 +38,7 @@ namespace ParserTypes {
 
 	class Object {
 	private:
-		std::unordered_map<std::string, YamlValue> map;
+		std::map<std::string, YamlValue> map;
 
 	public:
 		Object() {}
