@@ -73,15 +73,11 @@ Schema Schema::FromFile(std::string path)
 
 Schema::ValidationResult Schema::ValidateFromFile(std::string path)
 {
-	//std::ifstream schemaFile(path);
-	//YamlParser parser(schemaFile);
-	//ParserResult result = parser.Parse();
 
 	/*ParserTypes::Array yamlArray;
 
 	yamlArray.PushBack(ParserTypes::String("value"));
-
-	Yaml yaml = std::make_shared<ParserTypes::Array>(std::move(yamlArray));*/
+	yamlArray.PushBack(ParserTypes::Boolean("value"));
 
 	ParserTypes::Object yamlObjectBase;
 
@@ -89,7 +85,7 @@ Schema::ValidationResult Schema::ValidateFromFile(std::string path)
 	ParserTypes::Object yamlObject;
 
 	yamlObject.Set({ "test", ParserTypes::String("test") });
-	yamlObject.Set({ "red", ParserTypes::Null() });
+	yamlObject.Set({ "red", std::make_shared<ParserTypes::Array>(std::move(yamlArray)) });
 
 	yamlObjectBase.Set({ "test", std::make_shared<ParserTypes::Object>(std::move(yamlObject)) });
 	yamlObjectBase.Set({ "test2", ParserTypes::Boolean(true) });
@@ -97,7 +93,9 @@ Schema::ValidationResult Schema::ValidateFromFile(std::string path)
 	ParserTypes::Yaml yaml = std::make_shared<ParserTypes::Object>(std::move(yamlObjectBase));
 
 
-	ParserResult result = ParserResult(yaml);
+	ParserResult result = ParserResult(yaml);*/
+
+	ParserResult result = ParseYaml(path);
 
 	if (std::optional<ParserError> errorOptional = result.GetIfError()) {
 		if (errorOptional.has_value()) {

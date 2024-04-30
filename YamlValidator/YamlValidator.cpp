@@ -22,7 +22,7 @@ int main() {
 	Schema blogSchema2(Schema::CreateObject( {
 		{ "test", Schema::CreateObject({ 
 			{"test", Schema::Either(Schema::String, Schema::Boolean)},
-			{"red", Schema::Either(Schema::String, Schema::Boolean, Schema::Null)}
+			{"red", Schema::CreateArray(Schema::Either(Schema::String, Schema::Boolean))}
 		})},
 		{"test2", Schema::Either(Schema::String, Schema::Boolean)}
 	}));
