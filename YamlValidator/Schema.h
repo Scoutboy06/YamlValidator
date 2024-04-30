@@ -107,9 +107,9 @@ public:
 
 private:
 	std::variant<std::shared_ptr<ObjectImplementation>, std::shared_ptr<ArrayImplementation>> schema;
-	Schema YamlToSchema(ParserTypes::Yaml yaml) {};
+	Schema YamlToSchema(parser_types::Yaml yaml) {};
 
-	static bool compareTypeToParserType(std::variant<Types,Either> type, ParserTypes::YamlValue yamlInstance) {
+	static bool compareTypeToParserType(std::variant<Types,Either> type, parser_types::YamlValue yamlInstance) {
 		if (std::holds_alternative<Either>(type)) {
 			Either eitherType = std::get<Either>(type);
 
@@ -123,13 +123,13 @@ private:
 
 		Types typesType = std::get<Types>(type);
 
-		if (typesType == Schema::String && std::holds_alternative<ParserTypes::String>(yamlInstance))
+		if (typesType == Schema::String && std::holds_alternative<parser_types::String>(yamlInstance))
 			return true;
-		else if (typesType == Schema::Number && std::holds_alternative<ParserTypes::Number>(yamlInstance))
+		else if (typesType == Schema::Number && std::holds_alternative<parser_types::Number>(yamlInstance))
 			return true;
-		else if (typesType == Schema::Boolean && std::holds_alternative<ParserTypes::Boolean>(yamlInstance))
+		else if (typesType == Schema::Boolean && std::holds_alternative<parser_types::Boolean>(yamlInstance))
 			return true;
-		else if (typesType == Schema::Null && std::holds_alternative<ParserTypes::Null>(yamlInstance))
+		else if (typesType == Schema::Null && std::holds_alternative<parser_types::Null>(yamlInstance))
 			return true;
 
 		return false;
@@ -162,7 +162,7 @@ public:
 
 	//ValidationResult Validate(std::string input);
 
-	static ValidationResult Validate(ParserTypes::Yaml yaml, std::variant<std::shared_ptr<ObjectImplementation>, std::shared_ptr<ArrayImplementation>> schema);
+	static ValidationResult Validate(parser_types::Yaml yaml, std::variant<std::shared_ptr<ObjectImplementation>, std::shared_ptr<ArrayImplementation>> schema);
 
 	ValidationResult ValidateFromFile(std::string path);//validates a .yaml file using loaded Schema structure
 };

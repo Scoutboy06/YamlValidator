@@ -29,7 +29,7 @@ int main() {
 
 	//blogSchema.ValidateFromFile("abc.yaml");
 
-	blogSchema2.ValidateFromFile("abc.yaml");
+	blogSchema2.ValidateFromFile("yaml_array.yaml");
 
 	/*
 	Schema anotherBlogSchema({
