@@ -29,12 +29,18 @@ namespace parser_types {
 		Boolean(const bool value) : value(value) {}
 	};
 
+	struct Timestamp {
+		std::string value;
+		Timestamp(const std::string& value) : value(value) {}
+		Timestamp(const char value[]) : value(value) {}
+	};
+
 	struct Null {};
 
 	class Object;
 	class Array;
 
-	using YamlValue = std::variant<String, Number, Boolean, Null, std::shared_ptr<Object>, std::shared_ptr<Array>>;
+	using YamlValue = std::variant<String, Number, Boolean, Timestamp, Null, std::shared_ptr<Object>, std::shared_ptr<Array>>;
 	using Yaml = std::variant<std::shared_ptr<Object>, std::shared_ptr<Array>>;
 
 	class Object {

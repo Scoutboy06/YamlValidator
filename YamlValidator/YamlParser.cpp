@@ -134,10 +134,14 @@ YamlValue YamlParser::ParseValue() {
     }
 
     // End of un-quoted value
-    if (auto opt = IsBoolean(value); opt.has_value()) return Boolean(opt.value());
-    else if (IsNumber(value)) return Number(value);
-    else if (IsNull(value)) return Null();
-    //else if(auto opt = IsTimestamp(value); opt.has_value()) return Timestamp(opt.value());
+    if (auto opt = IsBoolean(value); opt.has_value())
+        return Boolean(opt.value());
+    else if (IsNumber(value))
+        return Number(value);
+    else if (IsNull(value))
+        return Null();
+    else if(IsTimestamp(value))
+        return Timestamp(value);
     return String(value);
 }
 
