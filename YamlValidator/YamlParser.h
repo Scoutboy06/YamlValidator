@@ -120,7 +120,7 @@ private:
     static std::optional<bool> IsBoolean(std::string& value);
     static bool IsNumber(std::string& value);
     static bool IsNull(std::string& value);
-    bool IsTimestamp(std::string& value);
+    static bool IsTimestamp(std::string& value);
 
     Object ParseYamlObject();
     Array ParseYamlArray();
