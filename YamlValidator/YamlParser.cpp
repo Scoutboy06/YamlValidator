@@ -75,7 +75,7 @@ YamlValue YamlParser::ParseValue() {
     // Extract the value
     while (
         currChar != '\n' &&
-        !(currChar == ',' && !isSingleQuoted && !isDoubleQuoted)
+        !((currChar == ',' || currChar == ':') && !isSingleQuoted && !isDoubleQuoted)
     ) {
         if (isEOF) {
             if(isSingleQuoted || isDoubleQuoted)
@@ -133,7 +133,11 @@ YamlValue YamlParser::ParseValue() {
         Advance();
     }
 
-    // End of un-quoted value
+    SkipWhitespace();
+
+    if (currChar == ':')
+        return std::make_shared<Object>(ParseYamlObject());
+
     if (auto opt = IsBoolean(value); opt.has_value())
         return Boolean(opt.value());
     else if (IsNumber(value))
@@ -262,7 +266,35 @@ bool YamlParser::IsTimestamp(std::string& v) {
 
 Object YamlParser::ParseYamlObject() {
     Object obj;
-    obj.Set({ "key", String("value") });
+    indentStack.push(column - 1);
+
+    while (true) {
+        std::string key = ParseObjectKey();
+
+        SkipWhitespace();
+        Expect(':', ErrorType::UnexpectedCharacterError);
+        SkipWhitespace();
+
+        YamlValue value = ParseValue();
+
+        obj.Set(key, value);
+
+        if (isEOF)
+            break;
+
+        SkipWhitespace();
+
+        if (column - 1 < indentStack.top())
+            break;
+
+        else if (column - 1 != indentStack.top())
+            throw ErrorType::InvalidIndentationError;
+
+        // If we are on the same indentation level, we can
+        // expect another item, thus continue
+    }
+
+    indentStack.pop();
     return obj;
 }
 
@@ -310,10 +342,8 @@ Array YamlParser::ParseYamlArray() {
 
         SkipWhitespace();
 
-        if (column - 1 < indentStack.top()) {
-            indentStack.pop();
-            return arr;
-        }
+        if (column - 1 < indentStack.top())
+            break;
 
         // If we are on the same indentation level, we can expect a new list item
         Expect('-', ErrorType::UnexpectedCharacterError);
