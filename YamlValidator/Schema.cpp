@@ -1,7 +1,7 @@
 #include "Types.h"
 #include "Schema.h"
 
-#include <format>
+#include <typeinfo>
 
 //#define ValidationTypeMismatch ValidationResult(ValidationResult::ValidationError(ValidationResult::ValidationError::TypeMismatch));
 //#define ValidationUnexpectedValue ValidationResult(ValidationResult::ValidationError(ValidationResult::ValidationError::UnexpectedValue));
@@ -24,7 +24,7 @@ std::vector <Schema::SchemaPair> YamlToSchema(parser_types::Yaml yaml) {
 
 		std::vector<std::string> keys = object->ExtractKeys();
 
-		for (std::string key : keys) {        // use auto for more complex types
+		for (std::string& key : keys) {        // use auto for more complex types
 			std::optional<parser_types::YamlValue> keyValue = object->Get(key);
 
 			if (keyValue.has_value()) {
@@ -55,7 +55,7 @@ std::vector <Schema::SchemaPair> YamlToSchema(parser_types::Yaml yaml) {
 	return { {":=", Schema::Boolean} };
 }
 
-Schema Schema::FromFile(std::string path)
+Schema Schema::FromFile(const std::string& path)
 {
 	std::ifstream schemaFile(path);
 	YamlParser parser(schemaFile);
@@ -74,7 +74,7 @@ Schema Schema::FromFile(std::string path)
 	return Schema({});
 }
 
-Schema::ValidationResult Schema::ValidateFromFile(std::string path)
+Schema::ValidationResult Schema::ValidateFromFile(const std::string& path)
 {
 	ParserResult result = ParseYaml(path);
 
@@ -95,29 +95,28 @@ Schema::ValidationResult Schema::ValidateFromFile(std::string path)
 	return GetValidationError(std::nullopt, Schema::ErrorType::UnknownError);
 }
 
-Schema::ValidationResult Schema::Validate(parser_types::Yaml yaml, std::variant<std::shared_ptr<ObjectImplementation>, std::shared_ptr<ArrayImplementation>> schema)
+Schema::ValidationResult Schema::Validate(
+	parser_types::Yaml yaml,
+	std::variant<std::shared_ptr<ObjectImplementation>, std::shared_ptr<ArrayImplementation>> schema
+)
 {
+	// 'yaml' is of type Object:
 	if (std::holds_alternative<std::shared_ptr<parser_types::Object>>(yaml)) {
-		//yaml base is an object
-		
-		std::shared_ptr<parser_types::Object> yamlObject = std::get<std::shared_ptr<parser_types::Object>>(yaml);
-
 		if (!std::holds_alternative<std::shared_ptr<ObjectImplementation>>(schema)) {
 			return  GetValidationError(std::nullopt, ErrorType::UnexpectedValue);//ValidationUnexpectedValue; //error or something because the base of the schema is not an object while the yaml is which almost certainly means that the yaml does not include schema things which are by default required
 		}
-
+		
+		std::shared_ptr<parser_types::Object> yamlObject = std::get<std::shared_ptr<parser_types::Object>>(yaml);
 		std::shared_ptr<ObjectImplementation> schemaObject = std::get<std::shared_ptr<ObjectImplementation>>(schema);
 
 		std::vector<std::string> yamlObjectKeys = yamlObject->ExtractKeys();
-
 		std::vector<std::string> schemaObjectKeys = schemaObject->ExtractKeys();
 
-		for (std::string yamlObjectKey : yamlObjectKeys) {
+		for (std::string& yamlObjectKey : yamlObjectKeys) {
 			if (!schemaObject->ContainsKey(yamlObjectKey))
 				continue;
 
 			std::optional<YamlValue> yamlObjectOptionalValue = yamlObject->Get(yamlObjectKey);
-
 			std::optional<SchemaValue> schemaObjectOptionalValue = schemaObject->Get(yamlObjectKey);
 
 			if (!yamlObjectOptionalValue.has_value() || !schemaObjectOptionalValue.has_value()) {
@@ -125,7 +124,6 @@ Schema::ValidationResult Schema::Validate(parser_types::Yaml yaml, std::variant<
 			}
 
 			YamlValue yamlObjectValue = yamlObjectOptionalValue.value();
-
 			SchemaValue schemaObjectValue = schemaObjectOptionalValue.value();
 
 			if (std::holds_alternative<std::shared_ptr<ObjectImplementation>>(schemaObjectValue)) {
@@ -143,6 +141,7 @@ Schema::ValidationResult Schema::Validate(parser_types::Yaml yaml, std::variant<
 				if (std::holds_alternative<ValidationResult::ValidationError>(result.result))
 					return result;
 			}
+
 			else if (std::holds_alternative<std::shared_ptr<ArrayImplementation>>(schemaObjectValue)) {
 				//recursion! (array)
 
@@ -157,13 +156,13 @@ Schema::ValidationResult Schema::Validate(parser_types::Yaml yaml, std::variant<
 				if (std::holds_alternative<ValidationResult::ValidationError>(result.result))
 					return result;
 
-			}
 			else if (std::holds_alternative<Either>(schemaObjectValue)) {
 				if (!Schema::compareTypeToParserType(std::get<Either>(schemaObjectValue), yamlObjectValue)) { //the object value does not have the right type
 					//return ValidationTypeMismatch;
 					return GetValidationError(SchemaError::ObjectError(yamlObject, yamlObjectKey), Schema::ErrorType::TypeMismatch);
 				};
 			}
+			
 			else if (!Schema::compareTypeToParserType(std::get<Types>(schemaObjectValue), yamlObjectValue)) { //the object value does not have the right type
 				//return ValidationTypeMismatch;
 				return GetValidationError(SchemaError::ObjectError(yamlObject, yamlObjectKey), Schema::ErrorType::TypeMismatch);
@@ -174,7 +173,7 @@ Schema::ValidationResult Schema::Validate(parser_types::Yaml yaml, std::variant<
 		return ValidationSuccess;
 	}
 
-	//yaml base is an array
+	// 'yaml' MUST be of type Array
 
 	if (!std::holds_alternative<std::shared_ptr<ArrayImplementation>>(schema)) {
 		//error or something because the base of the schema is not an array while the yaml is which almost certainly means that the yaml does not include schema things which are by default required
