@@ -8,42 +8,19 @@
 #include <iostream>
 #include <fstream>
 #include <typeinfo>
+//#include <format>
 
 #include "Types.h"
 #include "YamlParser.h"
 
 class Schema {
 public:
-	struct ValidationResult {
-		struct ValidationError {
-			enum SchemaError {
-				TypeMismatch,
-				UnexpectedValue,
-				UnknownError
-			};
-
-			/*int column;
-			int row;*/
-
-			std::variant<ParserError, SchemaError> error;
-
-			ValidationError(std::variant<ParserError, SchemaError> error/*, int column = -1, int row = -1*/) : error(error)/*, column(column), row(row)*/ {};
-		};
-
-		struct ValidationSuccess {
-
-		};
-
-		std::variant<ValidationError, ValidationSuccess> result;
-
-		ValidationResult(std::variant<ValidationError, ValidationSuccess> result) : result(result) { }
-	};
-
 	enum Types {
 		String,
 		Number,
 		Boolean,
-		Null
+		Null,
+		Timestamp
 	};
 
 
@@ -131,10 +108,58 @@ private:
 			return true;
 		else if (typesType == Schema::Null && std::holds_alternative<parser_types::Null>(yamlInstance))
 			return true;
+		else if (typesType == Schema::Timestamp && std::holds_alternative<parser_types::Timestamp>(yamlInstance))
+			return true;
 
 		return false;
 	}
 public:
+
+	enum ErrorType {
+		TypeMismatch,
+		UnexpectedValue,
+		UnknownError
+	};
+	struct SchemaError {
+
+		struct ArrayError {
+			std::shared_ptr<parser_types::Array> errorRoot;
+			std::optional<int> index;
+
+			ArrayError(std::shared_ptr<parser_types::Array> errorRoot, std::optional<int> index) : errorRoot(errorRoot), index(index) {};
+		};
+
+		struct ObjectError {
+			std::shared_ptr<parser_types::Object> errorRoot;
+			std::optional<std::string> key;
+
+			ObjectError(std::shared_ptr<parser_types::Object> errorRoot, std::optional<std::string> key) : errorRoot(errorRoot), key(key) {};
+		};
+
+		std::optional<std::variant<ArrayError, ObjectError>> information;
+		ErrorType errorType;
+
+		std::optional<std::string> message;
+
+		SchemaError(std::optional<std::variant<ArrayError, ObjectError>> information, ErrorType errorType) : information(information), errorType(errorType) {};
+	};
+	struct ValidationResult {
+		struct ValidationError {
+
+			std::variant<ParserError, SchemaError> error;
+
+			ValidationError(std::variant<ParserError, SchemaError> error) : error(error) {};
+		};
+
+		struct ValidationSuccess {
+
+		};
+
+		std::variant<ValidationError, ValidationSuccess> result;
+
+		ValidationResult(std::variant<ValidationError, ValidationSuccess> result) : result(result) { }
+	};
+
 	// static void FromFile(std::string filePath); // Om vi har tid?
 
 	Schema(std::variant<std::shared_ptr<ObjectImplementation>, std::shared_ptr<ArrayImplementation>> schema) : schema(schema) {

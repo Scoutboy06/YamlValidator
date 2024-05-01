@@ -15,21 +15,24 @@ int main() {
 	//	})},
 	//	});
 
-	Schema blogSchema(
-		Schema::CreateArray(Schema::Either(Schema::String, Schema::Null))
-	);
+	//Schema blogSchema(
+	//	Schema::CreateArray(Schema::Either(Schema::String, Schema::Timestamp))
+	//);
 
 	Schema blogSchema2(Schema::CreateObject( {
-		{ "test", Schema::CreateObject({ 
-			{"test", Schema::Either(Schema::String, Schema::Boolean)},
-			{"red", Schema::CreateArray(Schema::Either(Schema::String, Schema::Boolean))}
+		{"quoted ~key~", Schema::String},
+		{"unquoted-key", Schema::String},
+		{ "nested_object", Schema::CreateObject({ 
+			{"key", Schema::Number},
 		})},
-		{"test2", Schema::Either(Schema::String, Schema::Boolean)}
+		{"key with spaces", Schema::Boolean},
 	}));
 
 	//blogSchema.ValidateFromFile("abc.yaml");
 
-	blogSchema2.ValidateFromFile("yaml_array.yaml");
+	Schema::ValidationResult result = blogSchema2.ValidateFromFile("json_object.yaml");
+
+	if (true) {};
 
 	/*
 	Schema anotherBlogSchema({
