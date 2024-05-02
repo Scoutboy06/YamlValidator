@@ -3,10 +3,6 @@
 
 #include <typeinfo>
 
-//#define ValidationTypeMismatch ValidationResult(ValidationResult::ValidationError(ValidationResult::ValidationError::TypeMismatch));
-//#define ValidationUnexpectedValue ValidationResult(ValidationResult::ValidationError(ValidationResult::ValidationError::UnexpectedValue));
-//#define ValidationUnknownError ValidationResult(ValidationResult::ValidationError(ValidationResult::ValidationError::UnknownError));
-
 Schema::ValidationResult GetValidationError(std::optional<std::variant<Schema::SchemaError::ArrayError, Schema::SchemaError::ObjectError>> errorInformation, Schema::ErrorType errorType) {
 	return Schema::ValidationResult(Schema::ValidationResult::ValidationError(Schema::SchemaError(errorInformation, errorType)));
 }
@@ -102,9 +98,8 @@ Schema::ValidationResult Schema::Validate(
 {
 	// 'yaml' is of type Object:
 	if (std::holds_alternative<std::shared_ptr<parser_types::Object>>(yaml)) {
-		if (!std::holds_alternative<std::shared_ptr<ObjectImplementation>>(schema)) {
-			return  GetValidationError(std::nullopt, ErrorType::UnexpectedValue);//ValidationUnexpectedValue; //error or something because the base of the schema is not an object while the yaml is which almost certainly means that the yaml does not include schema things which are by default required
-		}
+		if (!std::holds_alternative<std::shared_ptr<ObjectImplementation>>(schema))
+			return  GetValidationError(std::nullopt, ErrorType::UnexpectedValue);//error or something because the base of the schema is not an object while the yaml is which almost certainly means that the yaml does not include schema things which are by default required
 		
 		std::shared_ptr<parser_types::Object> yamlObject = std::get<std::shared_ptr<parser_types::Object>>(yaml);
 		std::shared_ptr<ObjectImplementation> schemaObject = std::get<std::shared_ptr<ObjectImplementation>>(schema);
@@ -119,9 +114,8 @@ Schema::ValidationResult Schema::Validate(
 			std::optional<YamlValue> yamlObjectOptionalValue = yamlObject->Get(yamlObjectKey);
 			std::optional<SchemaValue> schemaObjectOptionalValue = schemaObject->Get(yamlObjectKey);
 
-			if (!yamlObjectOptionalValue.has_value() || !schemaObjectOptionalValue.has_value()) {
+			if (!yamlObjectOptionalValue.has_value() || !schemaObjectOptionalValue.has_value())
 				return GetValidationError(SchemaError::ObjectError(yamlObject, yamlObjectKey), Schema::ErrorType::UnknownError); //ValidationUnknownError;
-			}
 
 			YamlValue yamlObjectValue = yamlObjectOptionalValue.value();
 			SchemaValue schemaObjectValue = schemaObjectOptionalValue.value();
@@ -130,9 +124,8 @@ Schema::ValidationResult Schema::Validate(
 				//recursion! (object)
 
 				//yamlObjectValue also needs to be of object type or the types don't match
-				if (!std::holds_alternative<std::shared_ptr<parser_types::Object>>(yamlObjectValue)) {
+				if (!std::holds_alternative<std::shared_ptr<parser_types::Object>>(yamlObjectValue))
 					return GetValidationError(SchemaError::ObjectError(yamlObject, yamlObjectKey), Schema::ErrorType::UnexpectedValue);  //ValidationUnexpectedValue;
-				}
 
 				//recursion goes here
 				ValidationResult result = Schema::Validate(std::get<std::shared_ptr<parser_types::Object>>(yamlObjectValue), std::get<std::shared_ptr<ObjectImplementation>>(schemaObjectValue));
@@ -155,7 +148,7 @@ Schema::ValidationResult Schema::Validate(
 
 				if (std::holds_alternative<ValidationResult::ValidationError>(result.result))
 					return result;
-
+			}
 			else if (std::holds_alternative<Either>(schemaObjectValue)) {
 				if (!Schema::compareTypeToParserType(std::get<Either>(schemaObjectValue), yamlObjectValue)) { //the object value does not have the right type
 					//return ValidationTypeMismatch;
@@ -175,11 +168,8 @@ Schema::ValidationResult Schema::Validate(
 
 	// 'yaml' MUST be of type Array
 
-	if (!std::holds_alternative<std::shared_ptr<ArrayImplementation>>(schema)) {
-		//error or something because the base of the schema is not an array while the yaml is which almost certainly means that the yaml does not include schema things which are by default required
-		//return ValidationUnexpectedValue;
+	if (!std::holds_alternative<std::shared_ptr<ArrayImplementation>>(schema))
 		return GetValidationError(std::nullopt, Schema::ErrorType::UnexpectedValue);
-	}
 
 	std::shared_ptr<ArrayImplementation> schemaArray = std::get<std::shared_ptr<ArrayImplementation>>(schema);
 	std::variant<Types, Either> schemaArrayType = schemaArray->type; //the type that each element of the array needs to be. (can't be object or array)
@@ -193,22 +183,16 @@ Schema::ValidationResult Schema::Validate(
 			parser_types::YamlValue yamlArrayValue = yamlArrayValueOptional.value();
 
 			//array and object are not allowed for now.
-			if (std::holds_alternative<std::shared_ptr<parser_types::Object>>(yamlArrayValue) || std::holds_alternative<std::shared_ptr<parser_types::Array>>(yamlArrayValue)) {
-				//return ValidationUnexpectedValue;
+			if (std::holds_alternative<std::shared_ptr<parser_types::Object>>(yamlArrayValue) || std::holds_alternative<std::shared_ptr<parser_types::Array>>(yamlArrayValue))
 				return GetValidationError(SchemaError::ArrayError(yamlArray, i), Schema::ErrorType::UnexpectedValue);
-			}
 
 			//check that the element has the right type.
-			if (!Schema::compareTypeToParserType(schemaArrayType, yamlArrayValue)) { //the element does not have the right type
-				//return ValidationTypeMismatch;
+			if (!Schema::compareTypeToParserType(schemaArrayType, yamlArrayValue)) //the element does not have the right type
 				return GetValidationError(SchemaError::ArrayError(yamlArray, i), Schema::ErrorType::TypeMismatch);
-			};
 
 		}
-		else { //should never happen but still needs to be handled
-			//return ValidationUnknownError;
+		else//should never happen but still needs to be handled
 			return GetValidationError(std::nullopt, Schema::ErrorType::UnknownError);
-		}
 	}
 
 	return ValidationSuccess;

@@ -23,7 +23,7 @@ int main() {
 		{"quoted ~key~", Schema::String},
 		{"unquoted-key", Schema::String},
 		{ "nested_object", Schema::CreateObject({ 
-			{"key", Schema::Number},
+			{"key", Schema::Null},
 		})},
 		{"key with spaces", Schema::Boolean},
 	}));
