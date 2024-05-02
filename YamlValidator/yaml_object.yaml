@@ -1,0 +1,8 @@
+hello: there
+number: 123
+null: ~
+boolean: false
+star wars:
+  obi-wan: kenobi
+  anakin: skywalker
+likes: 34000000

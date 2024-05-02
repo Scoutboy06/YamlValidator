@@ -15,21 +15,23 @@ int main() {
 	//	})},
 	//	});
 
-	Schema blogSchema(
-		Schema::CreateArray(Schema::Either(Schema::String, Schema::Null))
-	);
+	auto yaml = ParseYaml("yaml_object.yaml");
 
-	Schema blogSchema2(Schema::CreateObject( {
+	/*Schema blogSchema(
+		Schema::CreateArray(Schema::Either(Schema::String, Schema::Null))
+	);*/
+
+	/*Schema blogSchema2(Schema::CreateObject( {
 		{ "test", Schema::CreateObject({ 
 			{"test", Schema::Either(Schema::String, Schema::Boolean)},
 			{"red", Schema::CreateArray(Schema::Either(Schema::String, Schema::Boolean))}
 		})},
 		{"test2", Schema::Either(Schema::String, Schema::Boolean)}
-	}));
+	}));*/
 
 	//blogSchema.ValidateFromFile("abc.yaml");
 
-	blogSchema2.ValidateFromFile("yaml_array.yaml");
+	//blogSchema2.ValidateFromFile("yaml_array.yaml");
 
 	/*
 	Schema anotherBlogSchema({
