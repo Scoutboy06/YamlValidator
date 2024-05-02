@@ -117,12 +117,12 @@ private:
 
     YamlValue ParseValue();
     std::string ParseObjectKey();
-    static std::optional<bool> IsBoolean(std::string& value);
-    static bool IsNumber(std::string& value);
-    static bool IsNull(std::string& value);
-    static bool IsTimestamp(std::string& value);
+    static std::optional<bool> IsBoolean(const std::string& value);
+    static bool IsNumber(const std::string& value);
+    static bool IsNull(const std::string& value);
+    static bool IsTimestamp(const std::string& value);
 
-    Object ParseYamlObject();
+    Object ParseYamlObject(const std::string& firstKey);
     Array ParseYamlArray();
 
     /*

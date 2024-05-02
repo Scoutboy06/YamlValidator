@@ -75,7 +75,7 @@ YamlValue YamlParser::ParseValue() {
     // Extract the value
     while (
         currChar != '\n' &&
-        !(currChar == ',' && !isSingleQuoted && !isDoubleQuoted)
+        !((currChar == ',' || currChar == ':') && !isSingleQuoted && !isDoubleQuoted)
     ) {
         if (isEOF) {
             if(isSingleQuoted || isDoubleQuoted)
@@ -133,7 +133,11 @@ YamlValue YamlParser::ParseValue() {
         Advance();
     }
 
-    // End of un-quoted value
+    SkipWhitespace();
+
+    if (currChar == ':')
+        return std::make_shared<Object>(ParseYamlObject(value));
+
     if (auto opt = IsBoolean(value); opt.has_value())
         return Boolean(opt.value());
     else if (IsNumber(value))
@@ -219,13 +223,13 @@ std::string YamlParser::ParseObjectKey() {
     return key;
 }
 
-std::optional<bool> YamlParser::IsBoolean(std::string& v) {
+std::optional<bool> YamlParser::IsBoolean(const std::string& v) {
     if (v == "true" || v == "True" || v == "TRUE") return true;
     else if (v == "false" || v == "False" || v == "FALSE") return false;
     return std::nullopt;
 }
 
-bool YamlParser::IsNumber(std::string& v) {
+bool YamlParser::IsNumber(const std::string& v) {
     if (v == ".nan"  || v == ".NaN"  || v == ".NAN"
      || v == ".inf"  || v == ".Inf"  || v == ".INF"
      || v == "-.inf" || v == "-.Inf" || v == "-.INF") return true;
@@ -251,18 +255,53 @@ bool YamlParser::IsNumber(std::string& v) {
     return std::regex_match(v, std::regex(R"([-+]?(\.[0-9]+|[0-9]+(\.[0-9]*)?)([eE][-+]?[0-9]+)?)"));
 }
 
-bool YamlParser::IsNull(std::string& v) {
+bool YamlParser::IsNull(const std::string& v) {
     return v.empty() || v == "~" || v == "null" || v == "Null" || v == "NULL";
 }
 
-bool YamlParser::IsTimestamp(std::string& v) {
+bool YamlParser::IsTimestamp(const std::string& v) {
     // Regex taken from https://www.myintervals.com/blog/2009/05/20/iso-8601-date-validation-that-doesnt-suck/
     return std::regex_match(v, std::regex(R"(^([\+-]?\d{4}(?!\d{2}\b))((-?)((0[1-9]|1[0-2])(\3([12]\d|0[1-9]|3[01]))?|W([0-4]\d|5[0-2])(-?[1-7])?|(00[1-9]|0[1-9]\d|[12]\d{2}|3([0-5]\d|6[1-6])))([T\s]((([01]\d|2[0-3])((:?)[0-5]\d)?|24\:?00)([\.,]\d+(?!:))?)?(\17[0-5]\d([\.,]\d+)?)?([zZ]|([\+-])([01]\d|2[0-3]):?([0-5]\d)?)?)?)?$)"));
 }
 
-Object YamlParser::ParseYamlObject() {
+Object YamlParser::ParseYamlObject(const std::string& firstKey) {
     Object obj;
-    obj.Set({ "key", String("value") });
+    indentStack.push(column - firstKey.size());
+
+    SkipWhitespace();
+    Expect(':', ErrorType::UnexpectedCharacterError);
+    SkipWhitespace();
+
+    YamlValue value = ParseValue();
+    obj.Set(firstKey, value);
+
+    while (true) {
+        SkipWhitespace();
+
+        if (isEOF)
+            break;
+
+        else if (column < indentStack.top())
+            break;
+
+        else if (column != indentStack.top())
+            throw ErrorType::InvalidIndentationError;
+
+        // If we are on the same indentation level,
+        // we can expect another item
+
+        std::string key = ParseObjectKey();
+
+        SkipWhitespace();
+        Expect(':', ErrorType::UnexpectedCharacterError);
+        SkipWhitespace();
+
+        YamlValue value = ParseValue();
+
+        obj.Set(key, value);
+    }
+
+    indentStack.pop();
     return obj;
 }
 
@@ -297,7 +336,7 @@ Object YamlParser::ParseJsonObject() {
 
 Array YamlParser::ParseYamlArray() {
     Array arr;
-    indentStack.push(column - 1);
+    indentStack.push(column);
 
     Expect('-', ErrorType::UnexpectedCharacterError);
     Expect(' ', ErrorType::UnexpectedCharacterError);
@@ -310,10 +349,8 @@ Array YamlParser::ParseYamlArray() {
 
         SkipWhitespace();
 
-        if (column - 1 < indentStack.top()) {
-            indentStack.pop();
-            return arr;
-        }
+        if (column < indentStack.top())
+            break;
 
         // If we are on the same indentation level, we can expect a new list item
         Expect('-', ErrorType::UnexpectedCharacterError);
