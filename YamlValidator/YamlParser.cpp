@@ -16,11 +16,6 @@ void YamlParser::Advance() {
     isPeekEOF = stream.eof();
 }
 
-void YamlParser::SkipSpaces() {
-    while (currChar == ' ')
-        Advance();
-}
-
 void YamlParser::SkipWhitespace() {
     while (isspace(currChar))
         Advance();
@@ -31,17 +26,6 @@ void YamlParser::Expect(char c, ErrorType error) {
         throw error;
     }
     Advance();
-}
-
-void YamlParser::ExpectEither(const std::string& chars, ErrorType error) {
-    for (char ch : chars) {
-        if (ch == currChar) {
-            Advance();
-            return;
-        }
-    }
-
-    throw error;
 }
 
 YamlValue YamlParser::ParseValue() {
