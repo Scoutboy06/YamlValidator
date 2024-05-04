@@ -29,7 +29,7 @@ std::string Schema::getTypeName(std::variant<Types, Either, parser_types::YamlVa
 
 		std::string name = "Either<";
 
-		for (const Types eitherInstanceType : eitherInstance.values) {
+		for (Types& eitherInstanceType : eitherInstance.values) {
 			name += getTypeName(eitherInstanceType) + ",";
 		}
 

@@ -4,5 +4,5 @@
 	nested_object: {
 		key: ~,
 	},
-	key with spaces: true
+	key with spaces: true,
 }
