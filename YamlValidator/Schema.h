@@ -144,7 +144,6 @@ public:
 	// static void FromFile(std::string filePath);
 
 	Schema(std::variant<std::shared_ptr<ObjectImplementation>, std::shared_ptr<ArrayImplementation>> schema) : schema(schema) {
-		std::cout << "ab" << std::endl;
 	};
 
 	static ValidationResult Validate(parser_types::Yaml yaml, std::variant<std::shared_ptr<ObjectImplementation>, std::shared_ptr<ArrayImplementation>> schema);
