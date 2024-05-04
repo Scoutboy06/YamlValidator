@@ -110,7 +110,7 @@ private:
 
 			std::string name = "Either<";
 
-			for (const Types eitherInstanceType : eitherInstance.values) {
+			for (Types& eitherInstanceType : eitherInstance.values) {
 				name += getTypeName(eitherInstanceType) + ",";
 			}
 
