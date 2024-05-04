@@ -8,7 +8,7 @@
 #include <iostream>
 #include <fstream>
 #include <typeinfo>
-//#include <format>
+#include <format>
 
 #include "Types.h"
 #include "YamlParser.h"
@@ -43,7 +43,6 @@ public:
 	using SchemaValue = std::variant<Types, Either, std::shared_ptr<ArrayImplementation>, std::shared_ptr<ObjectImplementation>>;
 	// SchemaValue needs a shared pointer for Object because it is forward declared
 	// and std::variant typically needs to know the objects size at declaration.
-
 
 	struct ObjectImplementation {
 	public:
@@ -86,6 +85,58 @@ private:
 	std::variant<std::shared_ptr<ObjectImplementation>, std::shared_ptr<ArrayImplementation>> schema;
 	Schema YamlToSchema(parser_types::Yaml yaml) {};
 
+	static std::string getTypeName(std::variant<Types, Either, parser_types::YamlValue> instance) {
+		if (std::holds_alternative<parser_types::YamlValue>(instance)) {
+			parser_types::YamlValue yamlValueInstance = std::get<parser_types::YamlValue>(instance);
+
+			if (std::holds_alternative<parser_types::String>(yamlValueInstance))
+				return "String";
+			else if (std::holds_alternative<parser_types::Number>(yamlValueInstance))
+				return "Number";
+			else if (std::holds_alternative<parser_types::Boolean>(yamlValueInstance))
+				return "Boolean";
+			else if (std::holds_alternative<parser_types::Null>(yamlValueInstance))
+				return "Null";
+			else if (std::holds_alternative<parser_types::Timestamp>(yamlValueInstance))
+				return "Timestamp";
+			else if (std::holds_alternative<std::shared_ptr<parser_types::Object>>(yamlValueInstance))
+				return "Object";
+			else if (std::holds_alternative<std::shared_ptr<parser_types::Array>>(yamlValueInstance))
+				return "Array";
+
+			return "";
+		} else if(std::holds_alternative<Either>(instance)) {
+			Either eitherInstance = std::get<Either>(instance);
+
+			std::string name = "Either<";
+
+			for (const Types eitherInstanceType : eitherInstance.values) {
+				name += getTypeName(eitherInstanceType) + ",";
+			}
+
+			name.pop_back(); //remove trailing comma
+
+			name += ">";
+
+			return name;
+		}
+
+		Types typeInstance = std::get<Types>(instance);
+
+		if (typeInstance == String)
+			return "String";
+		else if (typeInstance == Number)
+			return "Number";
+		else if (typeInstance == Boolean)
+			return "Boolean";
+		else if (typeInstance == Null)
+			return "Null";
+		else if (typeInstance == Timestamp)
+			return "Timestamp";
+
+		return "";
+	};
+
 	static bool compareTypeToParserType(std::variant<Types,Either> type, parser_types::YamlValue yamlInstance) {
 		if (std::holds_alternative<Either>(type)) {
 			Either eitherType = std::get<Either>(type);
@@ -112,7 +163,7 @@ private:
 			return true;
 
 		return false;
-	}
+	};
 public:
 
 	enum ErrorType {
@@ -141,7 +192,7 @@ public:
 
 		std::optional<std::string> message;
 
-		SchemaError(std::optional<std::variant<ArrayError, ObjectError>> information, ErrorType errorType) : information(information), errorType(errorType) {};
+		SchemaError(std::optional<std::variant<ArrayError, ObjectError>> information, ErrorType errorType, std::string message) : information(information), errorType(errorType), message(message) {};
 	};
 	struct ValidationResult {
 		struct ValidationError {
@@ -160,32 +211,17 @@ public:
 		ValidationResult(std::variant<ValidationError, ValidationSuccess> result) : result(result) { }
 	};
 
-	// static void FromFile(std::string filePath); // Om vi har tid?
+	static Schema::ValidationResult GetValidationError(std::optional<std::variant<Schema::SchemaError::ArrayError, Schema::SchemaError::ObjectError>> errorInformation, Schema::ErrorType errorType, std::string message = "");
+
+	static Schema::ValidationResult GetValidationErrorMismatch(std::optional<std::variant<Schema::SchemaError::ArrayError, Schema::SchemaError::ObjectError>> errorInformation, std::variant<Schema::Types, Schema::Either> expected, parser_types::YamlValue got);
+
+	static Schema::ValidationResult GetValidationErrorUnexpected(std::optional<std::variant<SchemaError::ArrayError, SchemaError::ObjectError>> errorInformation, parser_types::YamlValue unexpected);
+
+	// static void FromFile(std::string filePath);
 
 	Schema(std::variant<std::shared_ptr<ObjectImplementation>, std::shared_ptr<ArrayImplementation>> schema) : schema(schema) {
 		std::cout << "ab" << std::endl;
 	};
-
-	static Schema FromFile(const std::string& path);
-	//loads schema from file
-	/* YAML-file example
-	media: { type: string, required: true }
-	content:
-		- name: { type: string, required: true }
-		- label: { type: string, required: true }
-		- type: { type: string, required: true }
-
-		list: [1, 0, 2]
-		object:
-			currency:  [USD, 2]
-			value: 42.99
-
-		array:
-		  - [currency, USD, 45]
-		  - [value, 42.99]
-	*/
-
-	//ValidationResult Validate(std::string input);
 
 	static ValidationResult Validate(parser_types::Yaml yaml, std::variant<std::shared_ptr<ObjectImplementation>, std::shared_ptr<ArrayImplementation>> schema);
 

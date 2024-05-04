@@ -3,72 +3,34 @@
 
 #include <typeinfo>
 
-Schema::ValidationResult GetValidationError(std::optional<std::variant<Schema::SchemaError::ArrayError, Schema::SchemaError::ObjectError>> errorInformation, Schema::ErrorType errorType) {
-	return Schema::ValidationResult(Schema::ValidationResult::ValidationError(Schema::SchemaError(errorInformation, errorType)));
+Schema::ValidationResult Schema::GetValidationError(std::optional<std::variant<Schema::SchemaError::ArrayError, SchemaError::ObjectError>> errorInformation, ErrorType errorType, std::string message) {
+	return Schema::ValidationResult(Schema::ValidationResult::ValidationError(Schema::SchemaError(errorInformation, errorType, message)));
 }
 
-//Schema::ValidationResult GetValidationErrorMismatch(std::optional<std::variant<Schema::SchemaError::ArrayError, Schema::SchemaError::ObjectError>> errorInformation, Schema::ErrorType errorType, Schema::Types expected, Schema::Types got) {
-//	std::string message = std::format()
-//}
+Schema::ValidationResult Schema::GetValidationErrorUnexpected(std::optional<std::variant<SchemaError::ArrayError, SchemaError::ObjectError>> errorInformation, parser_types::YamlValue unexpected) {
+	std::string unexpectedTypeName = getTypeName(unexpected);
+
+	std::string message = std::format("UnexpectedValue: {}", unexpectedTypeName);
+
+	return GetValidationError(errorInformation, ErrorType::UnexpectedValue, message);
+}
+
+Schema::ValidationResult Schema::GetValidationErrorMismatch(std::optional<std::variant<SchemaError::ArrayError, SchemaError::ObjectError>> errorInformation, std::variant<Types,Either> expected, parser_types::YamlValue got) {
+	std::string expectedTypeName = "";
+	std::string gotTypeName = getTypeName(got);
+	
+	if(std::holds_alternative<Types>(expected))
+		expectedTypeName = getTypeName(std::get<Types>(expected));
+	else
+		expectedTypeName = getTypeName(std::get<Either>(expected));
+
+	std::string message = std::format("TypeMismatch: Expected {} but got {}", expectedTypeName, gotTypeName);
+	
+	return GetValidationError(errorInformation, ErrorType::TypeMismatch, message);
+}
 
 
 #define ValidationSuccess ValidationResult(ValidationResult::ValidationSuccess())
-
-std::vector <Schema::SchemaPair> YamlToSchema(parser_types::Yaml yaml) {
-	if (std::holds_alternative<std::shared_ptr<parser_types::Object>>(yaml)) {
-		std::shared_ptr<parser_types::Object> object = std::get<std::shared_ptr<parser_types::Object>>(yaml);
-
-		std::vector<std::string> keys = object->ExtractKeys();
-
-		for (std::string& key : keys) {        // use auto for more complex types
-			std::optional<parser_types::YamlValue> keyValue = object->Get(key);
-
-			if (keyValue.has_value()) {
-				parser_types::YamlValue value = keyValue.value();
-				//if it is an object or array, recursion!
-
-				if (std::holds_alternative<std::shared_ptr<parser_types::Object>>(value)) {
-					//schemaObject.push_back(YamlToSchema) //make it able to return object
-				}
-
-				if (std::holds_alternative<std::shared_ptr<parser_types::Array>>(value)) {
-					//schemaObject.push_back(YamlToSchema)
-				}
-
-				//...
-
-			}
-			else {	
-				//this will never happen :-)
-			}
-		}
-
-		//return;
-	}
-
-	std::shared_ptr<parser_types::Array> object = std::get<std::shared_ptr<parser_types::Array>>(yaml);
-
-	return { {":=", Schema::Boolean} };
-}
-
-Schema Schema::FromFile(const std::string& path)
-{
-	std::ifstream schemaFile(path);
-	YamlParser parser(schemaFile);
-	ParserResult result = parser.Parse();
-
-	if (std::optional<ParserError> error = result.GetIfError()) {
-		//return false;
-	}
-
-	if (std::optional<parser_types::Yaml> yaml = result.GetIfOk()) {
-		if (yaml.has_value()) {
-			//YamlToSchema(yaml.value());
-		}
-	}
-
-	return Schema({});
-}
 
 Schema::ValidationResult Schema::ValidateFromFile(const std::string& path)
 {
@@ -125,9 +87,9 @@ Schema::ValidationResult Schema::Validate(
 
 				//yamlObjectValue also needs to be of object type or the types don't match
 				if (!std::holds_alternative<std::shared_ptr<parser_types::Object>>(yamlObjectValue))
-					return GetValidationError(SchemaError::ObjectError(yamlObject, yamlObjectKey), Schema::ErrorType::UnexpectedValue);  //ValidationUnexpectedValue;
+					return GetValidationErrorUnexpected(SchemaError::ObjectError(yamlObject, yamlObjectKey), yamlObjectValue);
+					//return GetValidationError(SchemaError::ObjectError(yamlObject, yamlObjectKey), Schema::ErrorType::UnexpectedValue);  //ValidationUnexpectedValue;
 
-				//recursion goes here
 				ValidationResult result = Schema::Validate(std::get<std::shared_ptr<parser_types::Object>>(yamlObjectValue), std::get<std::shared_ptr<ObjectImplementation>>(schemaObjectValue));
 
 				//if we get an error return, otherwise the object is good and we can check the other keys
@@ -138,28 +100,21 @@ Schema::ValidationResult Schema::Validate(
 			else if (std::holds_alternative<std::shared_ptr<ArrayImplementation>>(schemaObjectValue)) {
 				//recursion! (array)
 
-				if (!std::holds_alternative<std::shared_ptr<parser_types::Array>>(yamlObjectValue)) {
-					//return ValidationUnexpectedValue;
-					return GetValidationError(SchemaError::ObjectError(yamlObject, yamlObjectKey), Schema::ErrorType::UnexpectedValue);
-				}
+				if (!std::holds_alternative<std::shared_ptr<parser_types::Array>>(yamlObjectValue))
+					return GetValidationErrorUnexpected(SchemaError::ObjectError(yamlObject, yamlObjectKey), yamlObjectValue);
 
-				//recursion goes here
 				ValidationResult result = Schema::Validate(std::get<std::shared_ptr<parser_types::Array>>(yamlObjectValue), std::get<std::shared_ptr<ArrayImplementation>>(schemaObjectValue));
 
 				if (std::holds_alternative<ValidationResult::ValidationError>(result.result))
 					return result;
 			}
 			else if (std::holds_alternative<Either>(schemaObjectValue)) {
-				if (!Schema::compareTypeToParserType(std::get<Either>(schemaObjectValue), yamlObjectValue)) { //the object value does not have the right type
-					//return ValidationTypeMismatch;
-					return GetValidationError(SchemaError::ObjectError(yamlObject, yamlObjectKey), Schema::ErrorType::TypeMismatch);
-				};
-			}
-			
-			else if (!Schema::compareTypeToParserType(std::get<Types>(schemaObjectValue), yamlObjectValue)) { //the object value does not have the right type
-				//return ValidationTypeMismatch;
-				return GetValidationError(SchemaError::ObjectError(yamlObject, yamlObjectKey), Schema::ErrorType::TypeMismatch);
-			};
+				//the object value does not have the right type
+				if (!Schema::compareTypeToParserType(std::get<Either>(schemaObjectValue), yamlObjectValue)) 
+					return GetValidationErrorMismatch(SchemaError::ObjectError(yamlObject, yamlObjectKey), std::get<Either>(schemaObjectValue), yamlObjectValue);
+			}  //the object value does not have the right type
+			else if (!Schema::compareTypeToParserType(std::get<Types>(schemaObjectValue), yamlObjectValue))
+				return GetValidationErrorMismatch(SchemaError::ObjectError(yamlObject, yamlObjectKey), std::get<Types>(schemaObjectValue), yamlObjectValue);
 		}
 
 
@@ -184,11 +139,11 @@ Schema::ValidationResult Schema::Validate(
 
 			//array and object are not allowed for now.
 			if (std::holds_alternative<std::shared_ptr<parser_types::Object>>(yamlArrayValue) || std::holds_alternative<std::shared_ptr<parser_types::Array>>(yamlArrayValue))
-				return GetValidationError(SchemaError::ArrayError(yamlArray, i), Schema::ErrorType::UnexpectedValue);
+				return GetValidationErrorUnexpected(SchemaError::ArrayError(yamlArray, i), yamlArrayValue);
 
 			//check that the element has the right type.
 			if (!Schema::compareTypeToParserType(schemaArrayType, yamlArrayValue)) //the element does not have the right type
-				return GetValidationError(SchemaError::ArrayError(yamlArray, i), Schema::ErrorType::TypeMismatch);
+				return GetValidationErrorMismatch(SchemaError::ArrayError(yamlArray, i), schemaArrayType, yamlArrayValue);
 
 		}
 		else//should never happen but still needs to be handled
