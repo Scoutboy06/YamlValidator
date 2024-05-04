@@ -84,6 +84,11 @@ struct ParserError {
     ParserError(ErrorType error, long line, long column) : error(error), line(line), column(column) {}
 };
 
+/**
+ * @class ParserResult
+ * @brief Class that contains a variant with either the parsed Yaml data,
+ *        or a ParserError
+ */
 class ParserResult {
 private:
     std::variant<Yaml, ParserError> result; /// The result of the parse operation.
