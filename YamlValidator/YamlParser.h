@@ -78,8 +78,8 @@ struct ParserError {
     /**
      * @brief Constructor for ParserError.
      * @param error The type of error.
-     * @param line The line where the error occured
-     * @param column The column where the error occured
+     * @param line The line where the error occured.
+     * @param column The column where the error occured.
      */
     ParserError(ErrorType error, long line, long column) : error(error), line(line), column(column) {}
 };
@@ -90,7 +90,7 @@ private:
 
 public:
     /**
-     * @brief Constructor for ParserResult when ther parse operation is successful.
+     * @brief Constructor for ParserResult when the parse operation is successful.
      * @param ok The parsed Yaml object.
      */
     ParserResult(Yaml ok) : result(ok) {}
@@ -123,14 +123,14 @@ public:
     Yaml GetResult() const { return std::get<Yaml>(result); }
 
     /**
-     * @breif Get the error of the parse object.
+     * @brief Get the error of the parse object.
      * @return The ParserError object.
-     * @throws std::bad_variant_access if the result is not a Yaml object.
+     * @throws std::bad_variant_access if the result is not a ParserError object.
      */
     ParserError GetError() const { return std::get<ParserError>(result); }
 
     /**
-     * @brief Get the result of the parse operation if it was successfull.
+     * @brief Get the result of the parse operation if it was successful.
      * @return An optional containing the parsed Yaml object if the parse
      *         operation was successful, std::nullopt otherwise.
      */
@@ -142,7 +142,7 @@ public:
 
     /**
      * @brief Get the error of the parse operation if it failed.
-     * @return An optional containing the ParserError object if the
+     * @return An optional containing a ParserError object if the
      *         parse operation failed, std::nullopt otherwise.
      */
     std::optional<ParserError> GetIfError() const {
@@ -158,7 +158,7 @@ public:
  */
 class YamlParser {
 private:
-    std::ifstream& stream;                  /// A reference to the input file stream..
+    std::ifstream& stream;                  /// A reference to the input file stream.
 
     char currChar;                          /// The current character being processed.
     char peekChar;                          /// The next character being processed.
@@ -247,20 +247,20 @@ private:
     /*
      * @brief Consumes and parses the input stream as a Json-like object.
      * @note `currChar` MUST be `{` when calling this method. Otherwise, an error will be thrown.
-     * @throws ParserError if currChar != '{'
+     * @throws ParserError if currChar != '{'.
      */
     Object ParseJsonObject();
 
     /*
      * @brief Consumes and parses the input stream as a Json-like array.
-     * @note `currChar` MUST be `[` when calling this method, else an error will be thrown.
-     * @throws ParserError if currChar != '['
+     * @note `currChar` MUST be `[` when calling this method. Otherwise an error will be thrown.
+     * @throws ParserError if currChar != '['.
      */
     Array ParseJsonArray();
     
 public:
     /**
-     * @brief Constructor for YamlParser
+     * @brief Constructor for YamlParser.
      * @param stream Reference to the input file stream.
      */
     YamlParser(std::ifstream& stream) : stream(stream) {
@@ -279,7 +279,7 @@ public:
 /**
  * @brief Parses a Yaml file.
  * @param filePath The file path to the input file.
- * @return A ParserResult object containing either the parses
+ * @return A ParserResult object containing either the parsed
  *         Yaml object or a ParseError object.
  */
 ParserResult ParseYaml(const std::string& filePath);
