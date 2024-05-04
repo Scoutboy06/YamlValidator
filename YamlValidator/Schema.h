@@ -85,85 +85,9 @@ private:
 	std::variant<std::shared_ptr<ObjectImplementation>, std::shared_ptr<ArrayImplementation>> schema;
 	Schema YamlToSchema(parser_types::Yaml yaml) {};
 
-	static std::string getTypeName(std::variant<Types, Either, parser_types::YamlValue> instance) {
-		if (std::holds_alternative<parser_types::YamlValue>(instance)) {
-			parser_types::YamlValue yamlValueInstance = std::get<parser_types::YamlValue>(instance);
+	static std::string getTypeName(std::variant<Types, Either, parser_types::YamlValue> instance);
 
-			if (std::holds_alternative<parser_types::String>(yamlValueInstance))
-				return "String";
-			else if (std::holds_alternative<parser_types::Number>(yamlValueInstance))
-				return "Number";
-			else if (std::holds_alternative<parser_types::Boolean>(yamlValueInstance))
-				return "Boolean";
-			else if (std::holds_alternative<parser_types::Null>(yamlValueInstance))
-				return "Null";
-			else if (std::holds_alternative<parser_types::Timestamp>(yamlValueInstance))
-				return "Timestamp";
-			else if (std::holds_alternative<std::shared_ptr<parser_types::Object>>(yamlValueInstance))
-				return "Object";
-			else if (std::holds_alternative<std::shared_ptr<parser_types::Array>>(yamlValueInstance))
-				return "Array";
-
-			return "";
-		} else if(std::holds_alternative<Either>(instance)) {
-			Either eitherInstance = std::get<Either>(instance);
-
-			std::string name = "Either<";
-
-			for (const Types eitherInstanceType : eitherInstance.values) {
-				name += getTypeName(eitherInstanceType) + ",";
-			}
-
-			name.pop_back(); //remove trailing comma
-
-			name += ">";
-
-			return name;
-		}
-
-		Types typeInstance = std::get<Types>(instance);
-
-		if (typeInstance == String)
-			return "String";
-		else if (typeInstance == Number)
-			return "Number";
-		else if (typeInstance == Boolean)
-			return "Boolean";
-		else if (typeInstance == Null)
-			return "Null";
-		else if (typeInstance == Timestamp)
-			return "Timestamp";
-
-		return "";
-	};
-
-	static bool compareTypeToParserType(std::variant<Types,Either> type, parser_types::YamlValue yamlInstance) {
-		if (std::holds_alternative<Either>(type)) {
-			Either eitherType = std::get<Either>(type);
-
-			for (const Types& typesType : eitherType.values) {
-				if (compareTypeToParserType(typesType, yamlInstance))
-					return true;
-			}
-
-			return false;
-		}
-
-		Types typesType = std::get<Types>(type);
-
-		if (typesType == Schema::String && std::holds_alternative<parser_types::String>(yamlInstance))
-			return true;
-		else if (typesType == Schema::Number && std::holds_alternative<parser_types::Number>(yamlInstance))
-			return true;
-		else if (typesType == Schema::Boolean && std::holds_alternative<parser_types::Boolean>(yamlInstance))
-			return true;
-		else if (typesType == Schema::Null && std::holds_alternative<parser_types::Null>(yamlInstance))
-			return true;
-		else if (typesType == Schema::Timestamp && std::holds_alternative<parser_types::Timestamp>(yamlInstance))
-			return true;
-
-		return false;
-	};
+	static bool compareTypeToParserType(std::variant<Types, Either> type, parser_types::YamlValue yamlInstance);
 public:
 
 	enum ErrorType {
