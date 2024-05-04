@@ -3,7 +3,7 @@
 
 #include <typeinfo>
 
-std::string Schema::getTypeName(std::variant<Types, Either, parser_types::YamlValue> instance) {
+std::string Schema::getTypeName(std::variant<Type, Either, parser_types::YamlValue> instance) {
 	if (std::holds_alternative<parser_types::YamlValue>(instance)) {
 		parser_types::YamlValue yamlValueInstance = std::get<parser_types::YamlValue>(instance);
 
@@ -29,7 +29,7 @@ std::string Schema::getTypeName(std::variant<Types, Either, parser_types::YamlVa
 
 		std::string name = "Either<";
 
-		for (Types& eitherInstanceType : eitherInstance.values) {
+		for (Type& eitherInstanceType : eitherInstance.values) {
 			name += getTypeName(eitherInstanceType) + ",";
 		}
 
@@ -40,7 +40,7 @@ std::string Schema::getTypeName(std::variant<Types, Either, parser_types::YamlVa
 		return name;
 	}
 
-	Types typeInstance = std::get<Types>(instance);
+	Type typeInstance = std::get<Type>(instance);
 
 	if (typeInstance == String)
 		return "String";
@@ -56,11 +56,11 @@ std::string Schema::getTypeName(std::variant<Types, Either, parser_types::YamlVa
 	return "";
 };
 
-bool Schema::compareTypeToParserType(std::variant<Types, Either> type, parser_types::YamlValue yamlInstance) {
+bool Schema::compareTypeToParserType(std::variant<Type, Either> type, parser_types::YamlValue yamlInstance) {
 	if (std::holds_alternative<Either>(type)) {
 		Either eitherType = std::get<Either>(type);
 
-		for (const Types& typesType : eitherType.values) {
+		for (const Type& typesType : eitherType.values) {
 			if (compareTypeToParserType(typesType, yamlInstance))
 				return true;
 		}
@@ -68,7 +68,7 @@ bool Schema::compareTypeToParserType(std::variant<Types, Either> type, parser_ty
 		return false;
 	}
 
-	Types typesType = std::get<Types>(type);
+	Type typesType = std::get<Type>(type);
 
 	if (typesType == Schema::String && std::holds_alternative<parser_types::String>(yamlInstance))
 		return true;
@@ -96,12 +96,12 @@ Schema::ValidationResult Schema::GetValidationErrorUnexpected(std::optional<std:
 	return GetValidationError(errorInformation, ErrorType::UnexpectedValue, message);
 }
 
-Schema::ValidationResult Schema::GetValidationErrorMismatch(std::optional<std::variant<SchemaError::ArrayError, SchemaError::ObjectError>> errorInformation, std::variant<Types,Either> expected, parser_types::YamlValue got) {
+Schema::ValidationResult Schema::GetValidationErrorMismatch(std::optional<std::variant<SchemaError::ArrayError, SchemaError::ObjectError>> errorInformation, std::variant<Type,Either> expected, parser_types::YamlValue got) {
 	std::string expectedTypeName = "";
 	std::string gotTypeName = getTypeName(got);
 	
-	if(std::holds_alternative<Types>(expected))
-		expectedTypeName = getTypeName(std::get<Types>(expected));
+	if(std::holds_alternative<Type>(expected))
+		expectedTypeName = getTypeName(std::get<Type>(expected));
 	else
 		expectedTypeName = getTypeName(std::get<Either>(expected));
 
@@ -194,8 +194,8 @@ Schema::ValidationResult Schema::Validate(
 				if (!Schema::compareTypeToParserType(std::get<Either>(schemaObjectValue), yamlObjectValue)) 
 					return GetValidationErrorMismatch(SchemaError::ObjectError(yamlObject, yamlObjectKey), std::get<Either>(schemaObjectValue), yamlObjectValue);
 			}  //the object value does not have the right type
-			else if (!Schema::compareTypeToParserType(std::get<Types>(schemaObjectValue), yamlObjectValue))
-				return GetValidationErrorMismatch(SchemaError::ObjectError(yamlObject, yamlObjectKey), std::get<Types>(schemaObjectValue), yamlObjectValue);
+			else if (!Schema::compareTypeToParserType(std::get<Type>(schemaObjectValue), yamlObjectValue))
+				return GetValidationErrorMismatch(SchemaError::ObjectError(yamlObject, yamlObjectKey), std::get<Type>(schemaObjectValue), yamlObjectValue);
 		}
 
 
@@ -208,7 +208,7 @@ Schema::ValidationResult Schema::Validate(
 		return GetValidationError(std::nullopt, Schema::ErrorType::UnexpectedValue);
 
 	std::shared_ptr<ArrayImplementation> schemaArray = std::get<std::shared_ptr<ArrayImplementation>>(schema);
-	std::variant<Types, Either> schemaArrayType = schemaArray->type; //the type that each element of the array needs to be. (can't be object or array)
+	std::variant<Type, Either> schemaArrayType = schemaArray->type; //the type that each element of the array needs to be. (can't be object or array)
 
 	std::shared_ptr<parser_types::Array> yamlArray = std::get<std::shared_ptr<parser_types::Array>>(yaml);
 

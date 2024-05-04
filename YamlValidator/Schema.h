@@ -15,7 +15,7 @@
 
 class Schema {
 public:
-	enum Types {
+	enum Type {
 		String,
 		Number,
 		Boolean,
@@ -27,7 +27,7 @@ public:
 	struct ObjectImplementation; //needs to be declared here so it can be forward declared later.
 
 	struct Either {
-		std::vector<Types> values;
+		std::vector<Type> values;
 
 		template<typename... Args>
 		Either(Args... args) : values({args...}) { };
@@ -35,12 +35,12 @@ public:
 
 	struct ArrayImplementation {
 	public:
-		std::variant<Types, Either> type;
-		ArrayImplementation(std::variant<Types, Either> type) : type(type) {};
+		std::variant<Type, Either> type;
+		ArrayImplementation(std::variant<Type, Either> type) : type(type) {};
 	};
 
 
-	using SchemaValue = std::variant<Types, Either, std::shared_ptr<ArrayImplementation>, std::shared_ptr<ObjectImplementation>>;
+	using SchemaValue = std::variant<Type, Either, std::shared_ptr<ArrayImplementation>, std::shared_ptr<ObjectImplementation>>;
 	// SchemaValue needs a shared pointer for Object because it is forward declared
 	// and std::variant typically needs to know the objects size at declaration.
 
@@ -70,7 +70,7 @@ public:
 		}
 	};
 
-	static std::shared_ptr<ArrayImplementation> CreateArray(std::variant<Types, Either> values) {
+	static std::shared_ptr<ArrayImplementation> CreateArray(std::variant<Type, Either> values) {
 		return std::make_shared<ArrayImplementation>(ArrayImplementation(values));
 	};
 
@@ -85,9 +85,9 @@ private:
 	std::variant<std::shared_ptr<ObjectImplementation>, std::shared_ptr<ArrayImplementation>> schema;
 	Schema YamlToSchema(parser_types::Yaml yaml) {};
 
-	static std::string getTypeName(std::variant<Types, Either, parser_types::YamlValue> instance);
+	static std::string getTypeName(std::variant<Type, Either, parser_types::YamlValue> instance);
 
-	static bool compareTypeToParserType(std::variant<Types, Either> type, parser_types::YamlValue yamlInstance);
+	static bool compareTypeToParserType(std::variant<Type, Either> type, parser_types::YamlValue yamlInstance);
 public:
 
 	enum ErrorType {
@@ -137,7 +137,7 @@ public:
 
 	static Schema::ValidationResult GetValidationError(std::optional<std::variant<Schema::SchemaError::ArrayError, Schema::SchemaError::ObjectError>> errorInformation, Schema::ErrorType errorType, std::string message = "");
 
-	static Schema::ValidationResult GetValidationErrorMismatch(std::optional<std::variant<Schema::SchemaError::ArrayError, Schema::SchemaError::ObjectError>> errorInformation, std::variant<Schema::Types, Schema::Either> expected, parser_types::YamlValue got);
+	static Schema::ValidationResult GetValidationErrorMismatch(std::optional<std::variant<Schema::SchemaError::ArrayError, Schema::SchemaError::ObjectError>> errorInformation, std::variant<Schema::Type, Schema::Either> expected, parser_types::YamlValue got);
 
 	static Schema::ValidationResult GetValidationErrorUnexpected(std::optional<std::variant<SchemaError::ArrayError, SchemaError::ObjectError>> errorInformation, parser_types::YamlValue unexpected);
 
