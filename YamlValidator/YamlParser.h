@@ -86,7 +86,7 @@ struct ParserError {
 
 /**
  * @class ParserResult
- * @brief Class that contains a variant with either the parsed Yaml data,
+ * @brief Class that contains a variant with either the parsed Yaml data
  *        or a ParserError
  */
 class ParserResult {
