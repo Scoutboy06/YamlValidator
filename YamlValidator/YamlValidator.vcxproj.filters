@@ -43,5 +43,6 @@
     <None Include="json_object.yaml">
       <Filter>Resource Files</Filter>
     </None>
+    <None Include="yaml_array.yaml" />
   </ItemGroup>
 </Project>

@@ -8,49 +8,26 @@
 #include <iostream>
 #include <fstream>
 #include <typeinfo>
+#include <format>
 
 #include "Types.h"
 #include "YamlParser.h"
 
 class Schema {
 public:
-	struct ValidationResult {
-		struct ValidationError {
-			enum SchemaError {
-				TypeMismatch,
-				UnexpectedValue,
-				UnknownError
-			};
-
-			/*int column;
-			int row;*/
-
-			std::variant<ParserError, SchemaError> error;
-
-			ValidationError(std::variant<ParserError, SchemaError> error/*, int column = -1, int row = -1*/) : error(error)/*, column(column), row(row)*/ {};
-		};
-
-		struct ValidationSuccess {
-
-		};
-
-		std::variant<ValidationError, ValidationSuccess> result;
-
-		ValidationResult(std::variant<ValidationError, ValidationSuccess> result) : result(result) { }
-	};
-
-	enum Types {
+	enum Type {
 		String,
 		Number,
 		Boolean,
-		Null
+		Null,
+		Timestamp
 	};
 
 
 	struct ObjectImplementation; //needs to be declared here so it can be forward declared later.
 
 	struct Either {
-		std::vector<Types> values;
+		std::vector<Type> values;
 
 		template<typename... Args>
 		Either(Args... args) : values({args...}) { };
@@ -58,15 +35,14 @@ public:
 
 	struct ArrayImplementation {
 	public:
-		std::variant<Types, Either> type;
-		ArrayImplementation(std::variant<Types, Either> type) : type(type) {};
+		std::variant<Type, Either> type;
+		ArrayImplementation(std::variant<Type, Either> type) : type(type) {};
 	};
 
 
-	using SchemaValue = std::variant<Types, Either, std::shared_ptr<ArrayImplementation>, std::shared_ptr<ObjectImplementation>>;
+	using SchemaValue = std::variant<Type, Either, std::shared_ptr<ArrayImplementation>, std::shared_ptr<ObjectImplementation>>;
 	// SchemaValue needs a shared pointer for Object because it is forward declared
 	// and std::variant typically needs to know the objects size at declaration.
-
 
 	struct ObjectImplementation {
 	public:
@@ -94,7 +70,7 @@ public:
 		}
 	};
 
-	static std::shared_ptr<ArrayImplementation> CreateArray(std::variant<Types, Either> values) {
+	static std::shared_ptr<ArrayImplementation> CreateArray(std::variant<Type, Either> values) {
 		return std::make_shared<ArrayImplementation>(ArrayImplementation(values));
 	};
 
@@ -109,58 +85,66 @@ private:
 	std::variant<std::shared_ptr<ObjectImplementation>, std::shared_ptr<ArrayImplementation>> schema;
 	Schema YamlToSchema(parser_types::Yaml yaml) {};
 
-	static bool compareTypeToParserType(std::variant<Types,Either> type, parser_types::YamlValue yamlInstance) {
-		if (std::holds_alternative<Either>(type)) {
-			Either eitherType = std::get<Either>(type);
+	static std::string getTypeName(std::variant<Type, Either, parser_types::YamlValue> instance);
 
-			for (const Types& typesType : eitherType.values) {
-				if (compareTypeToParserType(typesType, yamlInstance))
-					return true;
-			}
-
-			return false;
-		}
-
-		Types typesType = std::get<Types>(type);
-
-		if (typesType == Schema::String && std::holds_alternative<parser_types::String>(yamlInstance))
-			return true;
-		else if (typesType == Schema::Number && std::holds_alternative<parser_types::Number>(yamlInstance))
-			return true;
-		else if (typesType == Schema::Boolean && std::holds_alternative<parser_types::Boolean>(yamlInstance))
-			return true;
-		else if (typesType == Schema::Null && std::holds_alternative<parser_types::Null>(yamlInstance))
-			return true;
-
-		return false;
-	}
+	static bool compareTypeToParserType(std::variant<Type, Either> type, parser_types::YamlValue yamlInstance);
 public:
-	// static void FromFile(std::string filePath); // Om vi har tid?
 
-	Schema(std::variant<std::shared_ptr<ObjectImplementation>, std::shared_ptr<ArrayImplementation>> schema) : schema(schema) {
-		std::cout << "ab" << std::endl;
+	enum ErrorType {
+		TypeMismatch,
+		UnexpectedValue,
+		UnknownError
+	};
+	struct SchemaError {
+
+		struct ArrayError {
+			std::shared_ptr<parser_types::Array> errorRoot;
+			std::optional<int> index;
+
+			ArrayError(std::shared_ptr<parser_types::Array> errorRoot, std::optional<int> index) : errorRoot(errorRoot), index(index) {};
+		};
+
+		struct ObjectError {
+			std::shared_ptr<parser_types::Object> errorRoot;
+			std::optional<std::string> key;
+
+			ObjectError(std::shared_ptr<parser_types::Object> errorRoot, std::optional<std::string> key) : errorRoot(errorRoot), key(key) {};
+		};
+
+		std::optional<std::variant<ArrayError, ObjectError>> information;
+		ErrorType errorType;
+
+		std::optional<std::string> message;
+
+		SchemaError(std::optional<std::variant<ArrayError, ObjectError>> information, ErrorType errorType, std::string message) : information(information), errorType(errorType), message(message) {};
+	};
+	struct ValidationResult {
+		struct ValidationError {
+
+			std::variant<ParserError, SchemaError> error;
+
+			ValidationError(std::variant<ParserError, SchemaError> error) : error(error) {};
+		};
+
+		struct ValidationSuccess {
+
+		};
+
+		std::variant<ValidationError, ValidationSuccess> result;
+
+		ValidationResult(std::variant<ValidationError, ValidationSuccess> result) : result(result) { }
 	};
 
-	static Schema FromFile(const std::string& path);
-	//loads schema from file
-	/* YAML-file example
-	media: { type: string, required: true }
-	content:
-		- name: { type: string, required: true }
-		- label: { type: string, required: true }
-		- type: { type: string, required: true }
+	static Schema::ValidationResult GetValidationError(std::optional<std::variant<Schema::SchemaError::ArrayError, Schema::SchemaError::ObjectError>> errorInformation, Schema::ErrorType errorType, std::string message = "");
 
-		list: [1, 0, 2]
-		object:
-			currency:  [USD, 2]
-			value: 42.99
+	static Schema::ValidationResult GetValidationErrorMismatch(std::optional<std::variant<Schema::SchemaError::ArrayError, Schema::SchemaError::ObjectError>> errorInformation, std::variant<Schema::Type, Schema::Either> expected, parser_types::YamlValue got);
 
-		array:
-		  - [currency, USD, 45]
-		  - [value, 42.99]
-	*/
+	static Schema::ValidationResult GetValidationErrorUnexpected(std::optional<std::variant<SchemaError::ArrayError, SchemaError::ObjectError>> errorInformation, parser_types::YamlValue unexpected);
 
-	//ValidationResult Validate(std::string input);
+	// static void FromFile(std::string filePath);
+
+	Schema(std::variant<std::shared_ptr<ObjectImplementation>, std::shared_ptr<ArrayImplementation>> schema) : schema(schema) {
+	};
 
 	static ValidationResult Validate(parser_types::Yaml yaml, std::variant<std::shared_ptr<ObjectImplementation>, std::shared_ptr<ArrayImplementation>> schema);
 
