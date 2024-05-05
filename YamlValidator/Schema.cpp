@@ -88,14 +88,6 @@ Schema::ValidationResult Schema::GetValidationError(std::optional<std::variant<S
 	return Schema::ValidationResult(Schema::ValidationResult::ValidationError(Schema::SchemaError(errorInformation, errorType, message)));
 }
 
-Schema::ValidationResult Schema::GetValidationErrorUnexpected(std::optional<std::variant<SchemaError::ArrayError, SchemaError::ObjectError>> errorInformation, parser_types::YamlValue unexpected) {
-	std::string unexpectedTypeName = getTypeName(unexpected);
-
-	std::string message = std::format("UnexpectedValue: {}", unexpectedTypeName);
-
-	return GetValidationError(errorInformation, ErrorType::UnexpectedValue, message);
-}
-
 Schema::ValidationResult Schema::GetValidationErrorMismatch(std::optional<std::variant<SchemaError::ArrayError, SchemaError::ObjectError>> errorInformation, std::variant<Type,Either> expected, parser_types::YamlValue got) {
 	std::string expectedTypeName = "";
 	std::string gotTypeName = getTypeName(got);
@@ -108,6 +100,14 @@ Schema::ValidationResult Schema::GetValidationErrorMismatch(std::optional<std::v
 	std::string message = std::format("TypeMismatch: Expected {} but got {}", expectedTypeName, gotTypeName);
 	
 	return GetValidationError(errorInformation, ErrorType::TypeMismatch, message);
+}
+
+Schema::ValidationResult Schema::GetValidationErrorUnexpected(std::optional<std::variant<SchemaError::ArrayError, SchemaError::ObjectError>> errorInformation, parser_types::YamlValue unexpected) {
+	std::string unexpectedTypeName = getTypeName(unexpected);
+
+	std::string message = std::format("UnexpectedValue: {}", unexpectedTypeName);
+
+	return GetValidationError(errorInformation, ErrorType::UnexpectedValue, message);
 }
 
 
