@@ -17,7 +17,7 @@ class Schema {
 public:
     /**
      * @enum Type
-     * @brief Enum class representing the types of data which can be validated.
+     * @brief Enum representing the types of data that can be validated.
      */
     enum Type {
         String,
@@ -31,8 +31,8 @@ public:
 
     /**
      * @struct Either
-     * @brief Struct representing the Either Schema type which can store multiple enumeration-constants of the Type enum. 
-              Is used to allow for a yaml value to be of different types.
+     * @brief Struct representing the Either schema type which can store multiple enumeration-constants of the Type enum.
+     *        Is used to allow for a yaml value to be of different types.
      */
     struct Either {
         std::vector<Type> values; /// The different value-types to allow for. 
@@ -43,20 +43,21 @@ public:
 
 private:
 
-    struct ObjectImplementation; /// Needs to be declared here so it can be forward declared later.
+    struct ObjectImplementation; /// Forward declaration of ObjectImplementation
 
     /**
      * @struct ArrayImplementation
-     * @brief Struct representing an Array which accepts either a Type or Either to represent 
-     *		  the allowed types of the array.
-     * @note does not allow for arrays containing arrays or objects.
+     * @brief Struct representing an Array which accepts either a Type enum or Either struct
+     *        to represent the allowed types of the array.
+     * @note Does not allow for arrays containing arrays or objects.
      */
     struct ArrayImplementation {
     public:
-        std::variant<Type, Either> type; /// The type/types that are allowed in the array.
+        std::variant<Type, Either> type; /// The yaml data types that are allowed in the array.
+
         /**
          * @brief Constructor for ArrayImplementation.
-         * @param type The type/types that are allowed in the array.
+         * @param type The yaml data types that are allowed in the array.
          */
         ArrayImplementation(std::variant<Type, Either> type) : type(type) {};
     };
@@ -72,7 +73,7 @@ private:
 
     /**
      * @struct ObjectImplementation
-     * @brief Struct representing an Object which accepts an unordered map with the structure: { std::string, SchemaValue }.
+     * @brief Struct representing an Object with an std::string as key and SchemaValue as value.
      */
     struct ObjectImplementation {
     public:
@@ -80,14 +81,15 @@ private:
 
         /**
          * @brief Constructor for ObjectImplementation.
-         * @param values An unordered map with the structure: { std::string, SchemaValue }.
+         * @param values An unordered map with an std::string as key and SchemaValue as value.
          */
         ObjectImplementation(std::unordered_map<std::string, SchemaValue> values) : values(values) {};
         
         /**
          * @brief Gets the SchemaValue stored for the key if the key exists.
-         * @param &key The key to get the value with.
-         * @return An std::optional containing a SchemaValue if the key is valid or a std::nullopt if not.
+         * @param key The key to get the value with.
+         * @return An std::optional containing a SchemaValue if a value
+         *         associated with the key exists, std::nullopt otherwise.
          */
         std::optional<SchemaValue> Get(const std::string& key) const {
             auto it = values.find(key);
@@ -99,8 +101,8 @@ private:
 
         /**
          * @brief Checks whether or not the key is valid.
-         * @param &key The key to check whether or not it exists in the object.
-         * @return True if the object contains the key.
+         * @param key The key to check whether or not it exists in the object.
+         * @return True if the object contains the key, false otherwise.
          */
         bool ContainsKey(const std::string& key) const {
             return values.find(key) != values.end();
@@ -108,7 +110,7 @@ private:
 
         /**
          * @brief Gets all keys in the object.
-         * @return A vector containing the SchemaValue values.
+         * @return Vector containing the SchemaValue values.
          */
         std::vector<std::string> ExtractKeys() const {
             std::vector<std::string> keys;
@@ -124,8 +126,8 @@ public:
 
     /**
      * @brief Creates a shared pointer of an ArrayImplementation constructed based on parameters.
-     * @param type The type/types that are allowed in the array.
-     * @return A shared pointer of an ArrayImplementation.
+     * @param type Variant containing the allowed types in the vector.
+     * @return Shared pointer of an ArrayImplementation.
      */
     static std::shared_ptr<ArrayImplementation> CreateArray(std::variant<Type, Either> type) {
         return std::make_shared<ArrayImplementation>(ArrayImplementation(type));
@@ -133,8 +135,8 @@ public:
 
     /**
      * @brief Creates a shared pointer of an ObjectImplementation constructed based on parameters.
-     * @param values An unordered map with the structure: { std::string, SchemaValue }.
-     * @return A shared pointer of an ObjectImplementation.
+     * @param values Unordered map with the structure: { std::string, SchemaValue }.
+     * @return Shared pointer of an ObjectImplementation.
      */
     static std::shared_ptr<ObjectImplementation> CreateObject(std::unordered_map<std::string, SchemaValue> values) {
         return std::make_shared<ObjectImplementation>(ObjectImplementation(values));
@@ -144,9 +146,9 @@ private:
     std::variant<std::shared_ptr<ObjectImplementation>, std::shared_ptr<ArrayImplementation>> schema; /// The root for the schema which is used to validate.
 
     /**
-     * @brief Gets the name of the provided Type, Either or YamlValue instances.
-     * @param instance Instance of Type, Either or YamlValue.
-     * @return Name of the type of the instance.
+     * @brief Gives a string containing the visual name of the given type.
+     * @param instance Instance of either Type, Either or YamlValue.
+     * @return String containing the visual name of the given type.
      */
     static std::string getTypeName(std::variant<Type, Either, parser_types::YamlValue> instance);
 
