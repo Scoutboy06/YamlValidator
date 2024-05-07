@@ -27,6 +27,20 @@ public:
         Timestamp
     };
 
+    struct Either;
+
+private:
+
+    struct ObjectImplementation; /// Forward declaration of ObjectImplementation
+
+    struct ArrayImplementation;
+
+public:
+
+
+    using SchemaValue = std::variant<Type, Either, std::shared_ptr<ArrayImplementation>, std::shared_ptr<ObjectImplementation>>;
+    /// SchemaValue needs a shared pointer for ObjectImplementation because it is forward declared
+    /// and std::variant typically needs to know the objects size at declaration.
 
 
     /**
@@ -35,15 +49,13 @@ public:
      *        Is used to allow for a yaml value to be of different types.
      */
     struct Either {
-        std::vector<Type> values; /// The different value-types to allow for. 
+        std::vector<SchemaValue> values; /// The different value-types to allow for. 
 
         template<typename... Args>
-        Either(Args... args) : values({args...}) { };
+        Either(Args... args) : values({ args... }) { };
     };
 
 private:
-
-    struct ObjectImplementation; /// Forward declaration of ObjectImplementation
 
     /**
      * @struct ArrayImplementation
@@ -53,23 +65,14 @@ private:
      */
     struct ArrayImplementation {
     public:
-        std::variant<Type, Either> type; /// The yaml data types that are allowed in the array.
+        SchemaValue type; /// The yaml data types that are allowed in the array.
 
         /**
          * @brief Constructor for ArrayImplementation.
          * @param type The yaml data types that are allowed in the array.
          */
-        ArrayImplementation(std::variant<Type, Either> type) : type(type) {};
+        ArrayImplementation(SchemaValue type) : type(type) {};
     };
-
-public:
-
-
-    using SchemaValue = std::variant<Type, Either, std::shared_ptr<ArrayImplementation>, std::shared_ptr<ObjectImplementation>>;
-    // SchemaValue needs a shared pointer for ObjectImplementation because it is forward declared
-    // and std::variant typically needs to know the objects size at declaration.
-
-private:
 
     /**
      * @struct ObjectImplementation
@@ -129,7 +132,7 @@ public:
      * @param type Variant containing the allowed types in the vector.
      * @return Shared pointer of an ArrayImplementation.
      */
-    static std::shared_ptr<ArrayImplementation> CreateArray(std::variant<Type, Either> type) {
+    static std::shared_ptr<ArrayImplementation> CreateArray(SchemaValue type) {
         return std::make_shared<ArrayImplementation>(ArrayImplementation(type));
     };
 
@@ -150,7 +153,7 @@ private:
      * @param instance Instance of either Type, Either or YamlValue.
      * @return String containing the visual name of the given type.
      */
-    static std::string getTypeName(std::variant<Type, Either, parser_types::YamlValue> instance);
+    static std::string getTypeName(std::variant<SchemaValue, parser_types::YamlValue> instance);
 
     /**
      * @brief Checks whether or not the provided YamlValue instance has 
@@ -161,7 +164,7 @@ private:
      *		 yamlInstance is equivalent to any of the contained types.
      * @return True if the YamlValue instance has an equivalent Type.
      */
-    static bool compareTypeToParserType(std::variant<Type, Either> type, parser_types::YamlValue yamlInstance);
+    static bool compareTypeToParserType(SchemaValue type, parser_types::YamlValue yamlInstance);
 public:
 
     /**
@@ -294,6 +297,8 @@ public:
      */
     Schema(std::variant<std::shared_ptr<ObjectImplementation>, std::shared_ptr<ArrayImplementation>> schema) : schema(schema) {
     };
+
+    static Schema::ValidationResult ValidateCompare(SchemaValue schemaObjectValue, YamlValue yamlObjectValue, Schema::ValidationResult unexpected, Schema::ValidationResult mismatch);
 
     /**
      * @brief Validates provided Yaml object based on provided schema.
