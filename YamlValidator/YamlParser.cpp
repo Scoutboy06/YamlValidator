@@ -53,16 +53,15 @@ YamlValue YamlParser::ParseValue() {
     if (isSingleQuoted || isDoubleQuoted)
         Advance();
 
+    uint32_t spaceCount = 0;
+
     // TODO: Handle multi-line strings
     //bool isMultiLine = currChar == '>' || currChar == '|';
 
     // Extract the value
-    while (
-        currChar != '\n' &&
-        !((currChar == ',' || currChar == ':') && !isSingleQuoted && !isDoubleQuoted)
-    ) {
+    while (!(valueEndChars.find(currChar) != std::string::npos && !isSingleQuoted && !isDoubleQuoted)) {
         if (isEOF) {
-            if(isSingleQuoted || isDoubleQuoted)
+            if (isSingleQuoted || isDoubleQuoted)
                 throw ErrorType::UnexpectedEndOfFileError;
 
             break;
@@ -71,7 +70,7 @@ YamlValue YamlParser::ParseValue() {
         // Handle " character
         // " characters don't need to be escaped in a single-quote string
         else if (currChar == '"' && !isSingleQuoted) {
-            
+
             // " characters are not valid inside an un-quoted string
             if (!isDoubleQuoted) {
                 throw ErrorType::InvalidScalarError;
@@ -86,16 +85,16 @@ YamlValue YamlParser::ParseValue() {
         // Handle ' character
         // ' characters don't need to be escaped in a double-quote string
         else if (currChar == '\'' && !isDoubleQuoted) {
-            
+
             // ' characters are not valid inside an un-quoted string
-            if(!isSingleQuoted) {
+            if (!isSingleQuoted) {
                 throw ErrorType::InvalidScalarError;
             }
 
             // ' characters are escaped by ' characters in a single-quote string
             // eg. 'this ''string'' has '' characters inside,
             // Which gives out "this 'string' has ' characters inside"
-            if(peekChar == '\'') {
+            if (peekChar == '\'') {
                 value.push_back('\'');
                 Advance();
                 Advance();
@@ -111,6 +110,20 @@ YamlValue YamlParser::ParseValue() {
         // Handle invalid characters
         else if (!isSingleQuoted && !isDoubleQuoted && invalidValueChars.find(currChar) != std::string::npos) {
             throw ErrorType::UnexpectedCharacterError;
+        }
+
+        else if (currChar == ' ' && !isSingleQuoted && !isDoubleQuoted) {
+            spaceCount++;
+            Advance();
+            continue;
+        }
+
+        // If we encounter a normal character, and we have un-added spaces
+        else if(spaceCount > 0) {
+            for(uint32_t i = 0; i < spaceCount; i++)
+                value.push_back(' ');
+
+            spaceCount = 0;
         }
 
         value.push_back(currChar);
@@ -313,7 +326,7 @@ Object YamlParser::ParseJsonObject() {
         }
     }
 
-    Advance(); // Skip } character
+    Expect('}', ErrorType::UnexpectedCharacterError); // Skip } character
 
     return obj;
 }
