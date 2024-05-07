@@ -1,24 +1,34 @@
 #include "Schema.h"
 
 int main() {
-    //Schema blogSchema(Schema::CreateObject( {
-    //    {"hello", Schema::String},
-    //    {"number", Schema::Number},
-    //    {"null", Schema::Null},
-    //    {"boolean", Schema::Boolean},
-    //    { "star wars", Schema::CreateObject({ 
-    //        {"obi-wan", Schema::String},
-    //        {"anakin", Schema::String},
-    //    })},
-    //    {"likes", Schema::Number},
-    //}));
+    Schema blogSchema(Schema::CreateObject( {
+        {"media", Schema::String},
+        {"content", Schema::CreateArray( 
+            Schema::CreateObject({
+                { "name", Schema::String },
+                { "label", Schema::String },
+                { "type", Schema::String },
+                { "path", Schema::String },
+                { "fields", Schema::CreateArray(
+                    Schema::CreateObject({
+                        { "name", Schema::String },
+                        { "label", Schema::String },
+                        { "type", Schema::String },
+                        { "hidden", Schema::Boolean },
+                        { "default", Schema::String },
+                        { "options", Schema::CreateObject({ {"maxlength", Schema::Boolean} }) },
+                    })
+                )}
+            })
+        )}
+    }));
 
-    //Schema::ValidationResult result = blogSchema.ValidateFromFile("yaml_object.yaml");
+    Schema::ValidationResult result = blogSchema.ValidateFromFile("yaml_object.yaml");
 
-    Schema blogSchema(Schema::CreateArray(Schema::Either(Schema::String, Schema::Boolean, Schema::CreateObject({{ "hello", Schema::String }}),
-                                          Schema::Null, Schema::Timestamp, Schema::CreateArray(Schema::Either(Schema::Number, Schema::Boolean)))));
+    //Schema blogSchema(Schema::CreateArray(Schema::Either(Schema::String, Schema::Boolean, Schema::CreateObject({{ "hello", Schema::String }}),
+    //                                      Schema::Null, Schema::Timestamp, Schema::CreateArray(Schema::Either(Schema::Number, Schema::Boolean)))));
 
-    Schema::ValidationResult result = blogSchema.ValidateFromFile("yaml_array.yaml");
+    //Schema::ValidationResult result = blogSchema.ValidateFromFile("yaml_array.yaml");
 }
 
 
