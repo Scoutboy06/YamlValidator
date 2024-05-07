@@ -14,6 +14,7 @@ using namespace parser_types;
 
 #define INDENT_SIZE 2
 
+const std::string valueEndChars("]},\n:");
 const std::string invalidKeyChars(R"({}[]&*#?|<>=!%@\)");
 const std::string invalidValueChars(R"(:{}[]&*#?|<>=!%@\"')");
 
