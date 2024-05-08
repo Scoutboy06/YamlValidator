@@ -1,0 +1,13 @@
+media: files
+content:
+  - name: posts
+    label: Nyheter
+    type: collection
+    path: _nyheter
+    fields:
+      - { name: title, label: Titel, type: string }
+      - { name: layout, type: string, hidden: true, default: post }
+      - { name: date, label: Datum, type: date }
+      - { name: description, label: Beskrivning, type: string, options: { maxlength: 160 }}
+      - { name: image, label: Bild, type: image }
+      - { name: body, label: Brödtext, type: rich-text }
