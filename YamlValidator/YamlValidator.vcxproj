@@ -139,10 +139,11 @@
     <ClInclude Include="YamlParser.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="json_array.yaml" />
-    <None Include="json_object.yaml" />
-    <None Include="yaml_array.yaml" />
-    <None Include="yaml_object.yaml" />
+    <None Include="examples\json_array.yaml" />
+    <None Include="examples\json_object.yaml" />
+    <None Include="examples\yaml_array.yaml" />
+    <None Include="examples\yaml_example.yaml" />
+    <None Include="examples\yaml_object.yaml" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
