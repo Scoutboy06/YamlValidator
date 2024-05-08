@@ -262,6 +262,17 @@ public:
         ValidationResult(std::variant<ValidationError, ValidationSuccess> result) : result(result) { }
     };
 
+private:
+    /**
+     * @brief Compares provided SchemaValue and YamlValue.
+     * @param schemaValue SchemaValue to compare.
+     * @param yamlValue YamlValue to compare.
+     * @param mismatch ValidationResult error to return when a TypeMismatch occurs. 
+     * @return A ValidationResult object containing a ValidationError with appropriate information.
+     */
+    static Schema::ValidationResult ValidateCompare(SchemaValue schemaValue, YamlValue yamlValue, ValidationResult mismatch);
+public:
+
     /**
      * @brief Creates a ValidationResult with provided ErrorType and information.
      * @param errorInformation Specific information about the error based on if the error occurs 
@@ -280,7 +291,7 @@ public:
      * @param got The actual type of the value.
      * @return A ValidationResult object containing a ValidationError with appropriate information.
      */
-    static ValidationResult GetValidationErrorMismatch(std::optional<std::variant<SchemaError::ArrayError, SchemaError::ObjectError>> errorInformation, std::variant<Type, Either> expected, parser_types::YamlValue got);
+    static ValidationResult GetValidationErrorMismatch(std::optional<std::variant<SchemaError::ArrayError, SchemaError::ObjectError>> errorInformation, SchemaValue expected, parser_types::YamlValue got);
 
     /**
      * @brief Creates a ValidationResult with the UnexpectedValue errorType and information and a message based on parameters.
@@ -297,8 +308,6 @@ public:
      */
     Schema(std::variant<std::shared_ptr<ObjectImplementation>, std::shared_ptr<ArrayImplementation>> schema) : schema(schema) {
     };
-
-    static Schema::ValidationResult ValidateCompare(SchemaValue schemaObjectValue, YamlValue yamlObjectValue, Schema::ValidationResult unexpected, Schema::ValidationResult mismatch);
 
     /**
      * @brief Validates provided Yaml object based on provided schema.

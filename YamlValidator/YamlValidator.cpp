@@ -23,20 +23,10 @@ int main() {
         )}
     }));
 
-    Schema::ValidationResult result = blogSchema.ValidateFromFile("yaml_object.yaml");
+    Schema::ValidationResult result = blogSchema.ValidateFromFile("examples/yaml_example.yaml");
 
     //Schema blogSchema(Schema::CreateArray(Schema::Either(Schema::String, Schema::Boolean, Schema::CreateObject({{ "hello", Schema::String }}),
     //                                      Schema::Null, Schema::Timestamp, Schema::CreateArray(Schema::Either(Schema::Number, Schema::Boolean)))));
 
     //Schema::ValidationResult result = blogSchema.ValidateFromFile("yaml_array.yaml");
 }
-
-
-//- abc
-//- 123
-//- false
-//- ~
-//- -Nested array
-//- "Double \n quoted"
-//- 'Single \n quoted'
-//- 2024 - 02 - 17
