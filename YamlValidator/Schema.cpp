@@ -35,7 +35,7 @@ std::string Schema::getTypeName(std::variant<SchemaValue, parser_types::YamlValu
             name.pop_back(); //remove trailing bracket
             name.pop_back(); //remove trailing comma
 
-            return "Object";
+            return name + "})";
         }
         else if (std::holds_alternative<std::shared_ptr<parser_types::Array>>(yamlValueInstance)) {
             std::shared_ptr<parser_types::Array> yamlValueArray = std::get<std::shared_ptr<parser_types::Array>>(yamlValueInstance);
@@ -166,17 +166,38 @@ Schema::ValidationResult Schema::GetValidationError(std::optional<std::variant<S
 Schema::ValidationResult Schema::GetValidationErrorMismatch(std::optional<std::variant<SchemaError::ArrayError, SchemaError::ObjectError>> errorInformation, SchemaValue expected, parser_types::YamlValue got) {
     std::string expectedTypeName = getTypeName(expected);
     std::string gotTypeName = getTypeName(got);
-    /*
-    if (std::holds_alternative<Type>(expected)) {
-        SchemaValue schemaValueExpected = std::get<Type>(expected);
-        expectedTypeName = getTypeName(schemaValueExpected);
-    }
-    else {
-        SchemaValue schemaValueExpected = std::get<Either>(expected);
-        expectedTypeName = getTypeName(schemaValueExpected);
-    }*/
 
     std::string message = std::format("TypeMismatch: Expected {} but got {}", expectedTypeName, gotTypeName);
+    
+    if (errorInformation.has_value()) {
+        std::variant<SchemaError::ArrayError, SchemaError::ObjectError> errorInformationValue = errorInformation.value();
+
+        std::string at = "Null";
+
+        parser_types::YamlValue errorRoot = Null;
+
+        if (std::holds_alternative<SchemaError::ArrayError>(errorInformation.value())) {
+            SchemaError::ArrayError errorInformationArray = std::get<SchemaError::ArrayError>(errorInformationValue);
+
+            errorRoot = errorInformationArray.errorRoot;
+
+
+            if(errorInformationArray.index.has_value())
+                at = std::to_string(errorInformationArray.index.value());
+
+        }
+        else {
+            SchemaError::ObjectError errorInformationObject = std::get<SchemaError::ObjectError>(errorInformationValue);
+
+            errorRoot = errorInformationObject.errorRoot;
+
+            if (errorInformationObject.key.has_value())
+                at = errorInformationObject.key.value();
+        }
+        
+        message += std::format(" at '{}' in {}", at, getTypeName(errorRoot));
+    }
+
     
     return GetValidationError(errorInformation, ErrorType::TypeMismatch, message);
 }

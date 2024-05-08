@@ -13,10 +13,10 @@ int main() {
                     Schema::CreateObject({
                         { "name", Schema::String },
                         { "label", Schema::String },
-                        { "type", Schema::String },
+                        { "type", Schema::Number },
                         { "hidden", Schema::Boolean },
                         { "default", Schema::String },
-                        { "options", Schema::CreateObject({ {"maxlength", Schema::Boolean} }) },
+                        { "options", Schema::CreateObject({ {"maxlength", Schema::Number} }) },
                     })
                 )}
             })
