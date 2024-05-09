@@ -34,15 +34,27 @@ If you want to contribute to this project, please follow these steps:
 
 Here is an example of how you can use YamlValidator to validate a YAML file:
 
-### YAML File (yaml_object.yaml)
+### YAML File (examples/yaml_example.yaml)
 
 ```yaml
-string: textgoeshere
-number: 123
-null: ~
-boolean: false
-object:
-  string: text
+media: files
+content:
+  - name: posts
+    label: Nyheter
+    type: collection
+    path: _nyheter
+    fields:
+      - { name: title, label: Titel, type: string }
+      - { name: layout, type: string, hidden: true, default: post }
+      - { name: date, label: Datum, type: date }
+      - {
+          name: description,
+          label: Beskrivning,
+          type: string,
+          options: { maxlength: 160 },
+        }
+      - { name: image, label: Bild, type: image }
+      - { name: body, label: Brödtext, type: rich-text }
 ```
 
 ### Code (YamlValidator.cpp)
@@ -53,17 +65,30 @@ object:
 int main() {
     // Define the schema for the YAML file
     Schema blogSchema(Schema::CreateObject( {
-		{"string", Schema::String},
-		{"number", Schema::Number},
-		{"null", Schema::Null},
-		{"boolean", Schema::Boolean},
-		{ "object", Schema::CreateObject({
-			{"string", Schema::String}
-		})}
-	}));
+        {"media", Schema::String},
+        {"content", Schema::CreateArray(
+            Schema::CreateObject({
+                { "name", Schema::String },
+                { "label", Schema::String },
+                { "type", Schema::String },
+                { "path", Schema::String },
+                { "fields", Schema::CreateArray(
+                    Schema::CreateObject({
+                        { "name", Schema::String },
+                        { "label", Schema::String },
+                        { "type", Schema::Number },
+                        { "hidden", Schema::Boolean },
+                        { "default", Schema::String },
+                        { "options", Schema::CreateObject({ {"maxlength", Schema::Number} }) },
+                    })
+                )}
+            })
+        )}
+    }));
+
 
     // Validate the YAML file against the schema
-    Schema::ValidationResult result = blogSchema.ValidateFromFile("yaml_object.yaml");
+    Schema::ValidationResult result = blogSchema.ValidateFromFile("examples/yaml_example.yaml");
 }
 ```
 
