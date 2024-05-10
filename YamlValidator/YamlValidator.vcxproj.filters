@@ -37,12 +37,20 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="json_array.yaml">
+    <None Include="examples\json_array.yaml">
       <Filter>Resource Files</Filter>
     </None>
-    <None Include="json_object.yaml">
+    <None Include="examples\json_object.yaml">
       <Filter>Resource Files</Filter>
     </None>
-    <None Include="yaml_array.yaml" />
+    <None Include="examples\yaml_array.yaml">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="examples\yaml_example.yaml">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="examples\yaml_object.yaml">
+      <Filter>Resource Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

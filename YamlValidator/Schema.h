@@ -27,6 +27,20 @@ public:
         Timestamp
     };
 
+    struct Either;
+
+private:
+
+    struct ObjectImplementation; /// Forward declaration of ObjectImplementation
+
+    struct ArrayImplementation;
+
+public:
+
+
+    using SchemaValue = std::variant<Type, Either, std::shared_ptr<ArrayImplementation>, std::shared_ptr<ObjectImplementation>>;
+    /// SchemaValue needs a shared pointer for ObjectImplementation because it is forward declared
+    /// and std::variant typically needs to know the objects size at declaration.
 
 
     /**
@@ -35,15 +49,13 @@ public:
      *        Is used to allow for a yaml value to be of different types.
      */
     struct Either {
-        std::vector<Type> values; /// The different value-types to allow for. 
+        std::vector<SchemaValue> values; /// The different value-types to allow for. 
 
         template<typename... Args>
-        Either(Args... args) : values({args...}) { };
+        Either(Args... args) : values({ args... }) { };
     };
 
 private:
-
-    struct ObjectImplementation; /// Forward declaration of ObjectImplementation
 
     /**
      * @struct ArrayImplementation
@@ -53,23 +65,14 @@ private:
      */
     struct ArrayImplementation {
     public:
-        std::variant<Type, Either> type; /// The yaml data types that are allowed in the array.
+        SchemaValue type; /// The yaml data types that are allowed in the array.
 
         /**
          * @brief Constructor for ArrayImplementation.
          * @param type The yaml data types that are allowed in the array.
          */
-        ArrayImplementation(std::variant<Type, Either> type) : type(type) {};
+        ArrayImplementation(SchemaValue type) : type(type) {};
     };
-
-public:
-
-
-    using SchemaValue = std::variant<Type, Either, std::shared_ptr<ArrayImplementation>, std::shared_ptr<ObjectImplementation>>;
-    // SchemaValue needs a shared pointer for ObjectImplementation because it is forward declared
-    // and std::variant typically needs to know the objects size at declaration.
-
-private:
 
     /**
      * @struct ObjectImplementation
@@ -129,7 +132,7 @@ public:
      * @param type Variant containing the allowed types in the vector.
      * @return Shared pointer of an ArrayImplementation.
      */
-    static std::shared_ptr<ArrayImplementation> CreateArray(std::variant<Type, Either> type) {
+    static std::shared_ptr<ArrayImplementation> CreateArray(SchemaValue type) {
         return std::make_shared<ArrayImplementation>(ArrayImplementation(type));
     };
 
@@ -150,7 +153,7 @@ private:
      * @param instance Instance of either Type, Either or YamlValue.
      * @return String containing the visual name of the given type.
      */
-    static std::string getTypeName(std::variant<Type, Either, parser_types::YamlValue> instance);
+    static std::string getTypeName(std::variant<SchemaValue, parser_types::YamlValue> instance);
 
     /**
      * @brief Checks whether or not the provided YamlValue instance has 
@@ -161,7 +164,7 @@ private:
      *		 yamlInstance is equivalent to any of the contained types.
      * @return True if the YamlValue instance has an equivalent Type.
      */
-    static bool compareTypeToParserType(std::variant<Type, Either> type, parser_types::YamlValue yamlInstance);
+    static bool compareTypeToParserType(SchemaValue type, parser_types::YamlValue yamlInstance);
 public:
 
     /**
@@ -259,6 +262,17 @@ public:
         ValidationResult(std::variant<ValidationError, ValidationSuccess> result) : result(result) { }
     };
 
+private:
+    /**
+     * @brief Compares provided SchemaValue and YamlValue.
+     * @param schemaValue SchemaValue to compare.
+     * @param yamlValue YamlValue to compare.
+     * @param mismatch ValidationResult error to return when a TypeMismatch occurs. 
+     * @return A ValidationResult object containing a ValidationError with appropriate information.
+     */
+    static Schema::ValidationResult ValidateCompare(SchemaValue schemaValue, YamlValue yamlValue, ValidationResult mismatch);
+public:
+
     /**
      * @brief Creates a ValidationResult with provided ErrorType and information.
      * @param errorInformation Specific information about the error based on if the error occurs 
@@ -277,7 +291,7 @@ public:
      * @param got The actual type of the value.
      * @return A ValidationResult object containing a ValidationError with appropriate information.
      */
-    static ValidationResult GetValidationErrorMismatch(std::optional<std::variant<SchemaError::ArrayError, SchemaError::ObjectError>> errorInformation, std::variant<Type, Either> expected, parser_types::YamlValue got);
+    static ValidationResult GetValidationErrorMismatch(std::optional<std::variant<SchemaError::ArrayError, SchemaError::ObjectError>> errorInformation, SchemaValue expected, parser_types::YamlValue got);
 
     /**
      * @brief Creates a ValidationResult with the UnexpectedValue errorType and information and a message based on parameters.
